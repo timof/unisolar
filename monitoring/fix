@@ -1,0 +1,142 @@
+#!/bin/bash
+#
+# fix script:
+# - rebuild (forcefully!) $Y/$m/$d.txt
+# - create $Y/$m/$d.{first,last} if missing
+#
+# $Y/$m/$d.txt contains lines like
+#   timestamp work_total/MWh power power_1_1/W power_1_2/W power_2_1/W power_2_2/W
+#
+# $Y/$m/$d.{first,last} contain 3 lines:
+#   timestamp
+#   power
+#   work_today
+#   work_total
+# (power only makes sense in $Y/$m/$d.last during the day, should be 0 at end of day)
+#
+# units: power in W, work_total in MWh, work_day in kWh
+#
+# configuration:
+#   WR 2 === 2110014178 === strings AB and C
+#   WR 1 === 2110014868 === strings DE and F
+
+datadir=../daten
+
+while [ "$1" ] ; do
+
+  basename=`basename "$1"`
+  
+  # sleep 1
+
+  datestamp=`echo $basename|sed 's/^.*\(20[[:digit:]]\{6\}\).*$/\1/'`
+  Y=`echo $datestamp | sed 's/^\(20..\).*$/\1/'`
+  m=`echo $datestamp | sed "s/^$Y\(..\).*$/\1/"`
+  d=`echo $datestamp | sed "s/^$Y..\(..\).*$/\1/"`
+
+  echo "fixing: $1 ($basename) [$Y,$m,$d]"
+
+  mkdir -m 755 $datadir/$Y 2>/dev/null
+  mkdir -m 755 $datadir/$Y/$m 2>/dev/null
+  echo -n > $datadir/$Y/$m/$d.txt
+  chmod 644 $datadir/$Y/$m/$d.txt
+
+  tr -d '\r' < "$1" | {
+    
+    work_total_kWh_first='-'
+
+    while IFS=';' read c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
+                   c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
+                   c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 \
+                   c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 \
+                   c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 \
+                   c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 \
+                   c60 c61 c62 c63 c64 c65 c66 c67         \
+      ; do
+  
+      timestamp="$c00"
+      if [[ "$timestamp" =~ ^yyyy-MM-dd ]] ; then
+  
+        # header line with units:
+  
+        work_total_unit="$c01"
+        power_unit="$c05"
+  
+        # WR 2, actually...
+        #
+        work_1_unit="$c25"
+        power_1_1_unit="$c38"
+        power_1_2_unit="$c39"
+  
+        # WR 1, actually...
+        #
+        work_2_unit="$c48"
+        power_2_1_unit="$c61"
+        power_2_2_unit="$c62"
+  
+        if [ "$power_unit $work_2_unit $power_2_1_unit $power_2_2_unit $work_1_unit $power_1_1_unit $power_1_2_unit" != 'W W W W W W W' ] ; then
+          echo "unsupported power unit encountered" >&2
+          exit 1
+        fi
+  
+      elif [[ "$timestamp" =~ ^$Y-$m-$d ]] ; then
+  
+        # echo "[$c01,$c05,$c24,$c38,$c39,$c48,$c61,$c62]"
+  
+        work_total=`printf %.3f "$c01"`
+        power=`printf %.0f 0"$c05"`
+  
+        work_2=`printf %.0f 0"$c25"`
+        power_2_1=`printf %.0f 0"$c38"`
+        power_2_2=`printf %.0f 0"$c39"`
+  
+        work_1=`printf %.0f 0"$c48"`
+        power_1_1=`printf %.0f 0"$c61"`
+        power_1_2=`printf %.0f 0"$c62"`
+  
+        case "$work_total_unit" in
+          kWh )
+            work_total_kWh=$work_total
+            work_total_MWh=`echo "2k $work_total 1000 / p q" | dc`
+          ;;
+          MWh )
+            work_total_kWh=`echo "2k $work_total 1000 * p q" | dc`
+            work_total_MWh=$work_total
+          ;;
+        esac
+        work_total_kWh=`printf %.0f "$work_total_kWh"`
+        work_total_MWh=`printf %.3f "$work_total_MWh"`
+  
+        hi=`echo "$timestamp" | sed 's/^...........\(..\).*/\1/'`
+        mi=`echo "$timestamp" | sed 's/^..............\(..\).*/\1/'`
+  
+        # echo "$timestamp: $work_total_MWh, $power [$work_1 $power_1_1 $power_1_2] [$work_2 $power_2_1 $power_2_2]"
+  
+        echo "$hi$mi $work_total_MWh $power $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> $datadir/$Y/$m/$d.txt
+  
+        if [ \! -f $datadir/$Y/$m/$d.first ] ; then
+          echo $Y$m$d.$hi$mi > $datadir/$Y/$m/$d.first
+          echo "$power W" >> $datadir/$Y/$m/$d.first
+          echo "0 kWh" >> $datadir/$Y/$m/$d.first
+          echo "$work_total_kWh kWh" >> $datadir/$Y/$m/$d.first
+          chmod 644 $datadir/$Y/$m/$d.first
+        fi
+        if [ "$work_total_kWh_first" = '-' ] ; then
+          work_total_kWh_first="$work_total_kWh"
+        fi
+      fi
+  
+    done
+  
+    work_today_kWh=`echo 2k "$work_total_kWh $work_total_kWh_first - p q" | dc`
+    if [ \! -f $datadir/$Y/$m/$d.last ] ; then
+      echo $Y$m$d.$hi$mi > $datadir/$Y/$m/$d.last
+      echo "$power W" >> $datadir/$Y/$m/$d.last
+      echo "$work_today_kWh kWh" >> $datadir/$Y/$m/$d.last
+      echo "$work_total_kWh kWh" >> $datadir/$Y/$m/$d.last
+      chmod 644 $datadir/$Y/$m/$d.last
+    fi
+  }
+
+  shift
+done
+

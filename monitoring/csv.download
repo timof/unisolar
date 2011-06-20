@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+# $Y/$m/$d.txt contains lines like
+#   timestamp work_total/MWh power power_1_1/W power_1_2/W power_2_1/W power_2_2/W
+#
+# configuration:
+#   WR 2 === 2110014178 === strings AB and C
+#   WR 1 === 2110014868 === strings DE and F
+
+datadir=../daten
+
+utc=`utc`
+echo "$utc" >> download.log
+
+Y=`echo $utc|sed 's/^\(....\).*$/\1/'`
+m=`echo $utc|sed 's/^....\(..\).*$/\1/'`
+d=`echo $utc|sed 's/^......\(..\).*$/\1/'`
+
+H=`echo $utc|sed 's/^.........\(..\).*$/\1/'`
+M=`echo $utc|sed 's/^...........\(..\).*$/\1/'`
+
+mkdir -m 755 $datadir/$Y 2>/dev/null
+mkdir -m 755 $datadir/$Y/$m 2>/dev/null
+touch $datadir/$Y/$m/$d.txt
+chmod 644 $datadir/$Y/$m/$d.txt
+
+if wget --ftp-user=user --ftp-password=`cat passwd` -O tmp "ftp://h6pv.qipc.org/CSV/$Y/$m/$Y-$m-$d.csv" ; then
+
+  lastline=`tail -n 1 tmp`
+
+  echo "$utc: OK:" >> exp
+  echo "$lastline" >> exp
+  chmod 644 tmp
+  mv tmp "$datadir/$Y/$m/raw.$Y$m$d.csv"
+
+  echo "$lastline" | {
+    IFS=';' read c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
+                 c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
+                 c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 \
+                 c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 \
+                 c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 \
+                 c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 \
+                 c60 c61 c62 c63 c64 c65 c66 c67
+
+    timestamp="$c00"
+
+    work_total=`printf %.3f "$c01"`
+    power=`printf %.0f 0"$c05"`
+
+    work_1=`printf %.0f 0"$c25"`
+    power_1_1=`printf %.0f 0"$c38"`
+    power_1_2=`printf %.0f 0"$c39"`
+
+    work_2=`printf %.0f 0"$c48"`
+    power_2_1=`printf %.0f 0"$c61"`
+    power_2_2=`printf %.0f 0"$c62"`
+  
+    work_total_kWh=`echo "2k $work_total 1000 * p q" | dc`
+    work_total_MWh=$work_total
+
+    work_total_kWh=`printf %.0f "$work_total_kWh"`
+    work_total_MWh=`printf %.3f "$work_total_MWh"`
+  
+    hi=`echo "$timestamp" | sed 's/^...........\(..\).*/\1/'`
+    mi=`echo "$timestamp" | sed 's/^..............\(..\).*/\1/'`
+
+    # fix time zone insanities (should work east of greenwhich)
+    #
+    while [ \( "$hi" -ge 1 \) -a \( "$hi$mi" -ge "$H$M" \) ] ; do
+      $hi=$((hi-1))
+    done
+
+    echo "$hi$mi: $work_total_MWh, $power [$work_1 $power_1_1 $power_1_2] [$work_2 $power_2_1 $power_2_2]"
+    if grep "^$hi$mi " $datadir/$Y/$m/$d.txt &>/dev/null ; then
+      : nop
+    else
+      echo "$hi$mi $work_total $power $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> $datadir/$Y/$m/$d.txt
+    fi
+  }
+
+else
+  echo "$utc: FAILED" >> exp
+fi
+

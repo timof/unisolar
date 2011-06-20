@@ -1,0 +1,123 @@
+#!/bin/bash
+#
+# json.download: download values from sunny webbox via HTTP/JSON API
+# - advantage: fast!
+# - disadvantage: many details not available
+# thus, we use this script to get real-time values, and csv.download for the details
+
+datadir=/Users/unisolar/daten
+
+touch $datadir/last.tmp $datadir/last_production
+chmod 644 $datadir/last.tmp $datadir/last_production
+
+php > $datadir/last.tmp <<'EOF'
+<?php
+
+$timestamp = time();
+
+$datadir = '../daten';
+$url = 'http://h6pv.qipc.org/rpc';
+
+$Y = date( 'Y', $timestamp );
+$m = date( 'm', $timestamp );
+$d = date( 'd', $timestamp );
+$H = date( 'H', $timestamp );
+$M = date( 'i', $timestamp );
+
+// echo "$timestamp, $Y, $m, $d, $H, $M";
+
+$devices = array( "0080:7dc442e2", "0080:7dc44594" );
+
+function json_query( $proc, $parameters = array() ) {
+  global $url;
+  
+  // passwd seems to be not required for requests:
+  // , 'passwd' => '76....'
+  // , 'passwd' => 'e5....'
+
+  $request = array(
+    'version' => '1.0'
+  , 'format' => 'JSON'
+  , 'id' => '1'
+  , 'proc' => $proc
+  );
+  if( $parameters ) {
+    $request['params'] = $parameters;
+  }
+
+  $coded_request = 'RPC='.rawurlencode( json_encode( $request ) );
+  $coded_reply = `wget -O - --post-data='$coded_request' $url 2>/dev/null`;
+
+  return json_decode( $coded_reply, true );
+}
+
+$leistung = 'n/a';
+$arbeit = 'n/a';
+
+$r = json_query( 'GetPlantOverview' );
+$r = $r['result']['overview'];
+foreach( $r as $i ) {
+  switch( $i['name'] ) {
+    case 'Leistung':
+      $leistung = sprintf( '%u %s', $i['value'], $i['unit'] );
+      break;
+    case 'Gesamtertrag':
+      $arbeit_total = sprintf( '%.2f %s', $i['value'], $i['unit'] );
+      break;
+    case 'Tagesertrag':
+      $arbeit = sprintf( '%.2f %s', $i['value'], $i['unit'] );
+      break;
+  }
+}
+
+printf( "%04u%02u%02u.%02u%02u\n%s\n%s\n%s\n", $Y, $m, $d, $H, $M, $leistung, $arbeit, $arbeit_total );
+
+EOF
+
+
+utc=`head -n 1 $datadir/last.tmp`
+Y=`echo $utc|sed 's/^\(....\).*$/\1/'`
+m=`echo $utc|sed 's/^....\(..\).*$/\1/'`
+d=`echo $utc|sed 's/^......\(..\).*$/\1/'`
+
+mkdir -m 755 "$datadir/$Y" 2>/dev/null
+mkdir -m 755 "$datadir/$Y/$m" 2>/dev/null
+
+mv $datadir/last.tmp "$datadir/$Y/$m/$d.last"
+ln -sfn "$Y/$m/$d.last" $datadir/last
+
+power=`sed -e '1d' -e '3,$d' -e 's/^\([0-9]*\) .*$/\1/' < $datadir/last`
+if [ "$power" -gt 0 ] ; then
+  echo "$Y$m$d" > $datadir/last_production
+fi
+
+if [ ! -f "$datadir/$Y/$m/$d.first" ] ; then
+  sed '3s/^.*$/-/' < "$datadir/$Y/$m/$d.last" > "$datadir/$Y/$m/$d.first"
+  chmod 644 "$datadir/$Y/$m/$d.first"
+fi
+
+# var_dump( $r );
+# exit();
+# 
+# 
+# // var_dump( json_query( 'GetDevices' ) );
+# 
+# $W_total = 0;
+# 
+# foreach( $devices as $d ) {
+#   $p = array( 'device' => "$d" );
+#   // var_dump( json_query( 'GetProcessDataChannels', $p ) );
+#   
+#   $p = array( 'devices' => array(
+#     array( 'key' => $d )
+#   ) );
+#   $r = json_query( 'GetProcessData', $p );
+#   $r = $r['result']['devices'][0]['channels'];
+# 
+#   $W = $r['Leistung'];
+#   $W_total += $W;
+#   var_dump( $r );
+#   
+# }
+
+
