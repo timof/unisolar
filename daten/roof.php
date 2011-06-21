@@ -661,6 +661,12 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
     <div id='roofgraph'>" . roof_graph( $Yi, $mi, $di, $Hi, false ) . "</div>
   ";
 
+  echo "<hr><table width='100%'><tr>";
+    echo "<td style='text-align:left;'>server: <kbd>". getenv('HOSTNAME').'/'.getenv('server') ."</kbd></td>";
+    $version = file_exists( '../version.txt' ) ? file_get_contents( '../version.txt' ) : 'unknown';
+    echo "<td style='text-align:center;'>powered by <a href='http://github.com/timof/unisolar'>unisolar</a> version $version </td>";
+    echo "<td style='text-align:right;'>".date( 'Ymd.HMs' )."</td>";
+  echo "</tr></table>";
 
   
   
