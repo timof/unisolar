@@ -295,7 +295,7 @@ chmod 644 daten/2011/06/15.txt
 chmod 644 daten/2011/06/12.first
 chmod 644 daten/2011/06/16.txt
 chmod 644 daten/2011/06/04.txt
-chmod 777 daten/2011/06/21.last
+chmod 644 daten/2011/06/21.last
 chmod 644 daten/2011/06/09.first
 chmod 644 daten/2011/06/raw.20110617.csv
 chmod 644 daten/2011/06/raw.20110605.csv
