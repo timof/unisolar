@@ -453,6 +453,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
     body, div, caption, th, td, span {
       font-size:10pt;
       font-family:arial,sans-serif;
+      background-color:#aabbff;
     }
     .bigskip {
       padding-top:2em;
@@ -493,7 +494,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       border:0px;
     }
     table.graph th.vbar.active {
-      background-color:#eeccdd;
+      background-color:#7066cc;
     }
     table.graph td.vbar {
       padding:0pt;
@@ -503,13 +504,13 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       vertical-align:bottom;
     }
     table.graph td.vbar.active {
-      background-color:#8855bb;
+      background-color:#7066cc;
     }
     table.graph td.vbar.null {
       background-color:#bbbbbb;
     }
     table.graph td.vbar.null.active {
-      background-color:#aa88aa;
+      background-color:#aa99bb;
     }
     table.roof {
       border-spacing:0px;
@@ -527,7 +528,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       padding:0pt;
     }
     table.roof td.air {
-      background-color:white;
+      background-color:#aabbff;
     }
     table.roof td.roof {
       background-color:#aaaaaa;
