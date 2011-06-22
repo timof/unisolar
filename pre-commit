@@ -18,9 +18,15 @@ echo "<a href='http://github.com/timof/unisolar/commits/$COMMIT_FULL'>$BRANCH-$C
 EOF
   find monitoring daten -path ./.git -prune -o -path daten/old -prune -o -path daten/2\?\?\? -prune -o -exec stat -c "chmod %a %n" \{} \;
   echo "chmod 700 .git"
-} > deploy.sh
+} > deploy.sh.new
 
-chmod 700 deploy.sh
 
-git add deploy.sh
+if cmp --silent deploy.sh.new deploy.sh ; then
+  rm deploy.sh.new
+else
+  mv deploy.sh.new deploy.sh
+  chmod 700 deploy.sh
+  git add deploy.sh
+fi
+
 
