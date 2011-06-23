@@ -228,7 +228,7 @@ function vbar_graph( $data, $height, $cwidth = 3, $caption = '' ) {
 
 
 
-function string_graph( $Y, $m, $d, $H, $string ) {
+function string_graph( $Y, $m, $d, $H, $string, $cheight = 62, $cwidth = 3 ) {
   if( ! checkdate( $m, $d, $Y ) ) {
     var_dump( $m, $Y, $d );
     return false;
@@ -242,8 +242,6 @@ function string_graph( $Y, $m, $d, $H, $string ) {
   $lines = file( $path );
   if( ! $lines )
     return false;
-
-  $cheight = 62;
 
   switch( "$string" ) {
     case 'ab':
@@ -283,7 +281,7 @@ function string_graph( $Y, $m, $d, $H, $string ) {
       $t += 40;
     }
   }
-  return vbar_graph( $data, $cheight, 3, false );
+  return vbar_graph( $data, $cheight, $cwidth, false );
 }
 
 function roof_graph( $Y, $m, $d, $H, $caption = '' ) {
@@ -661,6 +659,19 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         </h4>
     <div id='roofgraph'>" . roof_graph( $Yi, $mi, $di, $Hi, false ) . "</div>
   ";
+
+  echo "<h4 class='view'>
+          <a href='".inlink( array( 'H' => $Hi - 1 ) )."'>&lt;&lt&lt</a>
+            Vergroesserung  Stringansicht $Ys$ms$ds.$Hs
+          <a href='".inlink( array( 'H' => $Hi + 1 ) )."'>&gt;&gt&gt</a>
+        </h4>
+    <table><tr>
+  ";
+  $HiS = max( $Hi - 2, 0 );
+  foreach( array( 'ab', 'c', 'de', 'f' ) as $string ) {
+    echo "<td>". string_graph( $Yi, $mi, $di, $HiS, $string, 400, 6 )."</td>";
+  }
+  echo "</tr></table>";
 
   echo "<hr><table width='100%'><tr>";
     echo "<td style='text-align:left;'>server: <kbd>". getenv('HOSTNAME').'/'.getenv('server') ."</kbd></td>";
