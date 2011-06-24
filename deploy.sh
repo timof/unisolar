@@ -33,12 +33,14 @@ chmod 600 monitoring/zip/2011-06-20_130000.zip
 chmod 755 daten
 chmod 644 daten/roof.php
 chmod 644 daten/d2.php
+chmod 644 daten/.first
 chmod 644 daten/current.php
 chmod 600 daten/c
 chmod 600 daten/1current.php
 chmod 644 daten/c2.php
 chmod 644 daten/gray.png
 chmod 644 daten/last_production
+chmod 644 daten/.last
 chmod 644 daten/lens.php
 chmod 777 daten/yellow.png
 chmod 777 daten/last

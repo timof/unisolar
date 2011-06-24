@@ -15,7 +15,7 @@ php > $datadir/last.tmp <<'EOF'
 
 $timestamp = time();
 
-$datadir = '../daten';
+$datadir = '/Users/unisolar/daten';
 $url = 'http://h6pv.qipc.org/rpc';
 
 $Y = date( 'Y', $timestamp );
@@ -72,6 +72,33 @@ foreach( $r as $i ) {
 
 printf( "%04u%02u%02u.%02u%02u\n%s\n%s\n%s\n", $Y, $m, $d, $H, $M, $leistung, $arbeit, $arbeit_total );
 
+$path = sprintf( $datadir . '/%04u/%02u/%02u.minutes', $Y, $m, $d );
+if( is_readable( $path ) ) {
+  $lines = file( $path );
+} else {
+  $lines = array();
+  for( $n = 0; $n <= 23; $n++ ) {
+    $l = sprintf( '%02u', $n );
+    for( $j = 0; $j <= 59; $j ++ )
+      $l .= ' -';
+    $lines[] = $l . "\n";
+  }
+}
+
+$mnew = fopen( $path . '.new', 'w' );
+foreach( $lines as $l ) {
+  $hv = explode( ' ', $l );
+  sscanf( $hv[ 0 ], '%u', & $Hi );
+  sscanf( $H, '%u', & $Hs );
+  if( $Hi === $Hs ) {
+    sscanf( $leistung, '%u', & $hv[ $M + 1 ] );
+  }
+  $l = implode( ' ', $hv );
+  fwrite( $mnew, $l );
+}
+fclose( $mnew );
+
+
 EOF
 
 
@@ -85,6 +112,9 @@ mkdir -m 755 "$datadir/$Y/$m" 2>/dev/null
 
 mv $datadir/last.tmp "$datadir/$Y/$m/$d.last"
 ln -sfn "$Y/$m/$d.last" $datadir/last
+
+chmod 644 "$datadir/$Y/$m/$d.minutes.new"
+mv "$datadir/$Y/$m/$d.minutes.new" "$datadir/$Y/$m/$d.minutes"
 
 power=`sed -e '1d' -e '3,$d' -e 's/^\([0-9]*\) .*$/\1/' < $datadir/last`
 if [ "$power" -gt 0 ] ; then
