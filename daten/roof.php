@@ -452,6 +452,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       font-size:10pt;
       font-family:arial,sans-serif;
       background-color:#aabbff;
+      padding:0px;
     }
     .bigskip {
       padding-top:2em;
@@ -467,9 +468,39 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       margin:0px;
       border:0px !important;
     }
+    div.title {
+      padding:0ex 0em 1ex 0em;
+      margin:-1ex 0em 0.1ex 0em;
+      font-size:11pt;
+      text-align:left;
+    }
     h4.view {
       padding: 0.1ex 1em 0ex 1em;
       margin:0.5ex 1em 0.1ex 1em;
+    }
+    table.layout, table.layout tr, table.layout tr td {
+      padding:0px;
+      margin:0px !important;
+      border-collapse:collapse;
+      empty-cells:show !important;
+      border-spacing:0px !important;
+      border:0px dotted red;
+    }
+    table.data, table.data tr, table.data tr th {
+      padding-left:2em;
+      white-space:nowrap !important;
+      text-align:left;
+    }
+    table.data tr td {
+      font-weight:bold;
+      white-space:nowrap !important;
+    }
+    table.data tr td.number {
+      padding-left:1em;
+      text-align:right;
+    }
+    table.data tr td.unit {
+      text-align:left;
     }
     table.graph {
       padding:0pt;
@@ -553,8 +584,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
     }
   </style>
 </head>
-<body>
-";
+<body>";
 
   $lines = file( 'last' );
   $now = explode( ',' , date( 'Y,m,d,H,i,s' ) );
@@ -599,7 +629,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
 
   $Ms = sprintf( '%02u', $Mi );
  
-  echo "<table><tr><td>";
+  echo "<table class='layout'><tr><td>";
   echo "<h4 class='view' style='padding-top:2px;'>
           <a href='".inlink( array( 'Y' => $Yi - 1 ) )."'>&lt;&lt&lt</a>
             Jahresproduktion $Ys
@@ -607,10 +637,12 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         </h4>
     <div id='yeargraph'>" . year_graph( $Yi, false ) . "</div>
   ";
-  echo "</td><td style='vertical-align:top;padding:2em 1em 1em 1em;font-size:12pt;'>";
+  echo "</td><td style='vertical-align:top;padding:1ex 1em 1ex 1em;font-size:12pt;'>";
+
+  echo "<div class='title'><a href='http://www.unisolar-potsdam.de'>UniSolar Potsdam e.V.</a> - <a href='//www.unisolar-potsdam.de/?page_id=716'>Photovoltaik-Anlage Haus 6, Campus Golm</a></div>";
 
   if( $current ) {
-    echo "<div id='timer'>aktuelle Ablesung: $Ys$ms$ds.$Hs$Ms ".A_UTC."</div>";
+    echo "<div id='timer' style='padding:0px;margin:0pt;'>aktuelle Ablesung: $Ys$ms$ds.$Hs$Ms ".A_UTC."</div>";
 
     if( count( $lines ) == 4 ) {
       sscanf( $lines[ 3 ], '%f %s', & $gt, & $gt_unit );
@@ -623,16 +655,41 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         default:
           break;
       }
-      printf( "<div class='smallskip'>Leistung: %s / Gesamtproduktion: %s MWh</div>", $lines[ 1 ], $gt );
+      sscanf( $lines[ 2 ], '%f %s', & $dt, & $dt_unit );
+      switch( $dt_unit ) {
+        case 'MWh':
+          $dt *= 1000;
+        case 'kWh':
+          $dt = sprintf( "%.2f", $dt );
+          break;
+        default:
+          break;
+      }
+      sscanf( $lines[ 1 ], '%f %s', & $cp, & $cp_unit );
+      switch( $cp_unit ) {
+        case 'W':
+          $cp /= 1000.0;
+        case 'kW':
+          $cp = sprintf( "%.2f", $cp );
+          break;
+        default:
+          break;
+      }
+      // if( 0 ) {
+      echo "<table class='data'>";
+      printf( "<tr><th>Leistung:</th><td class='number'>%s</td><td class='unit'>kW</tr>", $cp );
+      printf( "<tr><th>Arbeit heute:</th><td class='number'>%s</td><td class='unit'>kWh</td></tr>", $dt );
+      printf( "<tr><th>Arbeit gesamt:</th><td class='number'>%s</td><td class='unit'>MWh</td></tr>", $gt );
+      printf( "<tr><th>Rohdaten:</th><td colspan='2'><a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></td></tr>" );
+      echo "</table>";
+      // }
     }
   
   } else {
-    echo "<span class='medskip'>historische Ansicht $Ys$ms$ds.$Hs --- 
-         <a href='" . inlink( 'current' ) ."'>aktuelle Daten zeigen</a></span>";
+    echo "<div class='smallskip'>historische Ansicht $Ys$ms$ds.$Hs --- 
+         <a href='" . inlink( 'current' ) ."'>aktuelle Daten zeigen</a></div>";
+    echo "<div class='smallskip'>Rohdaten: <a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></div>";
   }
-  echo "<div class='medskip'>
-    Rohdaten: <a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></div>
-  ";
 
   echo "</td></tr></table>";
   
