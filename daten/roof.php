@@ -446,6 +446,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
 <html>
 <head>
   <title>UniSolar Potsdam e.V. - PV-Anlage Haus 6, Campus Golm</title>
+  <meta name='robots' content='index'>
   <meta http-equiv='expires' content='0'>
   <style type='text/css'>
     body, div, caption, th, td, span {
