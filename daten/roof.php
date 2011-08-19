@@ -44,7 +44,7 @@ function inlink( $change = array() ) {
     $m = ( isset( $change['m'] ) ? $change['m'] : $GLOBALS['mi'] );
     $d = ( isset( $change['d'] ) ? $change['d'] : min( $GLOBALS['di'], maxday( $Y, $m ) ) );
     $H = ( isset( $change['H'] ) ? $change['H'] : $GLOBALS['Hi'] );
-    if( $Y < 2011 || $Y > 2011 )
+    if( $Y < 2011 || $Y > $GLOBALS['Yn'] )
       return '#';
     if( $H < 0 || $H > 23 )
       return '#';
@@ -458,11 +458,63 @@ function year_graph( $Y, $caption = '' ) {
 
 
 
+$now = explode( ',' , date( 'Y,m,d,H,i,s' ) );
+$Yn = $now[0];
+$mn = $now[1];
+$dn = $now[2];
+$Hn = $now[3];
+$Mn = $now[4];
+
+$lines = file( 'last' );
+$last = $lines[ 0 ];
+$Yi = substr( $last, 0, 4 );
+$mi = substr( $last, 4, 2 );
+$di = substr( $last, 6, 2 );
+$Hi = substr( $last, 9, 2 );
+$Mi = substr( $last, 11, 2 );
+
+$current = true;
+
+if( isset( $_GET['Y'] ) ) {
+  sscanf( $_GET['Y'], '%u', & $Yi );
+  $current = false;
+}
+$Ys = sprintf( '%02u', $Yi );
+
+if( isset( $_GET['m'] ) ) {
+  sscanf( $_GET['m'], '%u', & $mi );
+  $current = false;
+}
+$ms = sprintf( '%02u', $mi );
+
+if( isset( $_GET['d'] ) ) {
+  sscanf( $_GET['d'], '%u', & $di );
+  $current = false;
+}
+$ds = sprintf( '%02u', $di );
+
+if( isset( $_GET['H'] ) ) {
+  sscanf( $_GET['H'], '%u', & $Hi );
+  $current = false;
+}
+$Hs = sprintf( '%02u', $Hi );
+
+$Ms = sprintf( '%02u', $Mi );
+
+if( ( ! checkdate( $mi, $di, $Yi ) )
+    || ( $Yi < 2011 )
+    || ( $Yi > $Yn )
+    || ( $Hi < 2 )
+    || ( $Hi > 23 ) ) {
+  header( 'HTTP/1.0 404 invalid parameters' );
+  echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n\n\ninvalid parameters in query string";
+  return;
+}
+
+
 
 
 echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
-
-
 
 
 <html>
@@ -624,49 +676,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
 </head>
 <body>";
 
-  $now = explode( ',' , date( 'Y,m,d,H,i,s' ) );
-  $Yn = $now[0];
-  $mn = $now[1];
-  $dn = $now[2];
-  $Hn = $now[3];
-  $Mn = $now[4];
 
-  $lines = file( 'last' );
-  $last = $lines[ 0 ];
-  $Yi = substr( $last, 0, 4 );
-  $mi = substr( $last, 4, 2 );
-  $di = substr( $last, 6, 2 );
-  $Hi = substr( $last, 9, 2 );
-  $Mi = substr( $last, 11, 2 );
-
-  $current = true;
-
-  if( isset( $_GET['Y'] ) ) {
-    sscanf( $_GET['Y'], '%u', & $Yi );
-    $current = false;
-  }
-  $Ys = sprintf( '%02u', $Yi );
-
-  if( isset( $_GET['m'] ) ) {
-    sscanf( $_GET['m'], '%u', & $mi );
-    $current = false;
-  }
-  $ms = sprintf( '%02u', $mi );
-
-  if( isset( $_GET['d'] ) ) {
-    sscanf( $_GET['d'], '%u', & $di );
-    $current = false;
-  }
-  $ds = sprintf( '%02u', $di );
-
-  if( isset( $_GET['H'] ) ) {
-    sscanf( $_GET['H'], '%u', & $Hi );
-    $current = false;
-  }
-  $Hs = sprintf( '%02u', $Hi );
-
-  $Ms = sprintf( '%02u', $Mi );
- 
   echo "<table class='layout'><tr><td>";
   echo "<h4 class='view' style='padding-top:2px;'><span class='td gap'>";
   if( $Yi > 2011 )
