@@ -18,16 +18,38 @@ function random_hex_string( $bytes ) {
   return $s;
 }
 
+if( getenv( 'robot' ) ) {
+  if( $_GET['nonce'] ) {
+    header( 'HTTP/1.0 410 gone' );
+    return;
+  }
+}
+
+function maxday( $Y, $m ) {
+  foreach( array( 31, 30, 29, 28 ) as $d )
+    if( checkdate( $m, $d, $Y ) )
+      return $d;
+  return NULL;
+}
+
 function inlink( $change = array() ) {
   $nonce = random_hex_string( 8 );
-  $reself = "roof.php?nonce=$nonce";
+  $reself = "roof.php?";
+  if( ! getenv('robot') )
+    $reself .= "&amp;nonce=$nonce";
   if( $change === 'current' ) {
     return $reself;
   } else {
     $Y = ( isset( $change['Y'] ) ? $change['Y'] : $GLOBALS['Yi'] );
     $m = ( isset( $change['m'] ) ? $change['m'] : $GLOBALS['mi'] );
-    $d = ( isset( $change['d'] ) ? $change['d'] : $GLOBALS['di'] );
+    $d = ( isset( $change['d'] ) ? $change['d'] : min( $GLOBALS['di'], maxday( $Y, $m ) ) );
     $H = ( isset( $change['H'] ) ? $change['H'] : $GLOBALS['Hi'] );
+    if( $Y < 2011 || $Y > 2011 )
+      return '#';
+    if( $H < 0 || $H > 23 )
+      return '#';
+    if( ! checkdate( $m, $d, $Y ) )
+      return '#';
     return "$reself&amp;Y=$Y&amp;m=$m&amp;d=$d&amp;H=$H";
   }
 }
@@ -476,8 +498,23 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       text-align:left;
     }
     h4.view {
+      display:table-row;
       padding: 0.1ex 1em 0ex 1em;
       margin:0.5ex 1em 0.1ex 1em;
+    }
+    span.td.gap {
+      /* border: 1px solid red; */
+      display:table-cell;
+      min-width:4em !important;
+      max-width:4em !important;
+      width:4em !important;
+      text-align:center;
+    }
+    span.td {
+      /* border: 1px solid blue; */
+      display:table-cell;
+      text-align:center;
+      padding:1px 1ex 1px 1ex;
     }
     table.layout, table.layout tr, table.layout tr td {
       padding:0px;
@@ -587,20 +624,20 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
 </head>
 <body>";
 
-  $lines = file( 'last' );
   $now = explode( ',' , date( 'Y,m,d,H,i,s' ) );
-  $Yi = $now[0];
-  $mi = $now[1];
-  $di = $now[2];
-  $Hi = $now[3];
-  $Mi = $now[4];
+  $Yn = $now[0];
+  $mn = $now[1];
+  $dn = $now[2];
+  $Hn = $now[3];
+  $Mn = $now[4];
 
-  $now = $lines[ 0 ];
-  $Yi = substr( $now, 0, 4 );
-  $mi = substr( $now, 4, 2 );
-  $di = substr( $now, 6, 2 );
-  $Hi = substr( $now, 9, 2 );
-  $Mi = substr( $now, 11, 2 );
+  $lines = file( 'last' );
+  $last = $lines[ 0 ];
+  $Yi = substr( $last, 0, 4 );
+  $mi = substr( $last, 4, 2 );
+  $di = substr( $last, 6, 2 );
+  $Hi = substr( $last, 9, 2 );
+  $Mi = substr( $last, 11, 2 );
 
   $current = true;
 
@@ -631,10 +668,13 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   $Ms = sprintf( '%02u', $Mi );
  
   echo "<table class='layout'><tr><td>";
-  echo "<h4 class='view' style='padding-top:2px;'>
-          <a href='".inlink( array( 'Y' => $Yi - 1 ) )."'>&lt;&lt&lt</a>
-            Jahresproduktion $Ys
-          <a href='".inlink( array( 'Y' => $Yi + 1 ) )."'>&gt;&gt&gt</a>
+  echo "<h4 class='view' style='padding-top:2px;'><span class='td gap'>";
+  if( $Yi > 2011 )
+    echo "<a href='".inlink( array( 'Y' => $Yi - 1 ) )."'>&lt;&lt&lt</a>";
+  echo "</span><span class='td'>Jahresproduktion $Ys</span><span class='td gap'>";
+  if( $Yi < $Yn )
+    echo "<a href='".inlink( array( 'Y' => $Yi + 1 ) )."'>&gt;&gt&gt</a>";
+  echo "</span>
         </h4>
     <div id='yeargraph'>" . year_graph( $Yi, false ) . "</div>
   ";
@@ -681,7 +721,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       printf( "<tr><th>Leistung:</th><td class='number'>%s</td><td class='unit'>kW</tr>", $cp );
       printf( "<tr><th>Arbeit heute:</th><td class='number'>%s</td><td class='unit'>kWh</td></tr>", $dt );
       printf( "<tr><th>Arbeit gesamt:</th><td class='number'>%s</td><td class='unit'>MWh</td></tr>", $gt );
-      printf( "<tr><th>Rohdaten:</th><td colspan='2'><a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></td></tr>" );
+      printf( "<tr><th style='padding-top:2px;'>Rohdaten:</th><td  style='padding-top:2px;' colspan='2'><a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></td></tr>" );
       echo "</table>";
       // }
     }
@@ -694,35 +734,43 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
 
   echo "</td></tr></table>";
   
-  echo "<h4 class='view'>
-          <a href='".inlink( array( 'm' => $mi - 1 ) )."'>&lt;&lt&lt</a>
-            Monatsproduktion $Ys$ms
-          <a href='".inlink( array( 'm' => $mi + 1 ) )."'>&gt;&gt&gt</a>
-        </h4>
+  echo "<h4 class='view'><span class='td gap'>";
+  if( $mi > 1 )
+    echo "<a href='".inlink( array( 'm' => $mi - 1 ) )."'>&lt;&lt&lt</a>";
+  echo "</span><span class='td'>Monatsproduktion $Ys$ms</span><span class='td gap'>";
+  if( $mi < 12 )
+    echo "<a href='".inlink( array( 'm' => $mi + 1 ) )."'>&gt;&gt&gt</a>";
+  echo "</span></h4>
     <div id='monthgraph'> " . month_graph( $Yi, $mi, false ) . "</div>
   ";
 
-  echo "<h4 class='view'>
-          <a href='".inlink( array( 'd' => $di - 1 ) )."'>&lt;&lt&lt</a>
-            Tagesproduktion $Ys$ms$ds
-          <a href='".inlink( array( 'd' => $di + 1 ) )."'>&gt;&gt&gt</a>
-        </h4>
+  echo "<h4 class='view'><span class='td gap'>";
+  if( $di > 1 )
+    echo "<a href='".inlink( array( 'd' => $di - 1 ) )."'>&lt;&lt&lt</a>";
+  echo "</span><span class='td'>Tagesproduktion $Ys$ms$ds</span><span class='td gap'>";
+  if( checkdate( $mi, $di + 1, $Yi ) )
+    echo "<a href='".inlink( array( 'd' => $di + 1 ) )."'>&gt;&gt&gt</a>";
+  echo "</span></h4>
     <div id='daygraph'>" . day_graph( $Yi, $mi, $di, false ) . "</div>
   ";
 
-  echo "<h4 class='view'>
-          <a href='".inlink( array( 'H' => $Hi - 1 ) )."'>&lt;&lt&lt</a>
-            Stringansicht $Ys$ms$ds.$Hs
-          <a href='".inlink( array( 'H' => $Hi + 1 ) )."'>&gt;&gt&gt</a>
-        </h4>
+  echo "<h4 class='view'><span class='td gap'>";
+  if( $Hi > 2 )
+    echo "<a href='".inlink( array( 'H' => $Hi - 1 ) )."'>&lt;&lt&lt</a>";
+  echo "</span><span class='td'>Stringansicht $Ys$ms$ds.$Hs</span><span class='td gap'>";
+  if( $Hi < 23 )
+    echo "<a href='".inlink( array( 'H' => $Hi + 1 ) )."'>&gt;&gt&gt</a>";
+  echo "</span></h4>
     <div id='roofgraph'>" . roof_graph( $Yi, $mi, $di, $Hi, false ) . "</div>
   ";
 
-  echo "<h4 class='view'>
-          <a href='".inlink( array( 'H' => $Hi - 1 ) )."'>&lt;&lt&lt</a>
-            Vergroesserung  Stringansicht $Ys$ms$ds.$Hs
-          <a href='".inlink( array( 'H' => $Hi + 1 ) )."'>&gt;&gt&gt</a>
-        </h4>
+  echo "<h4 class='view'><span class='td gap'>";
+  if( $Hi > 2 )
+    echo "<a href='".inlink( array( 'H' => $Hi - 1 ) )."'>&lt;&lt&lt</a>";
+  echo "</span><span class='td'>Vergroesserung  Stringansicht $Ys$ms$ds.$Hs</span><span class='td gap'>";
+  if( $Hi < 23 )
+    echo "<a href='".inlink( array( 'H' => $Hi + 1 ) )."'>&gt;&gt&gt</a>";
+  echo "</span></h4>
     <table><tr>
   ";
   $HiS = max( $Hi - 2, 0 );
