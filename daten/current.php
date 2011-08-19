@@ -195,23 +195,32 @@ echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">
 
   day_graph( $year, $month, $day, $caption );
 
-echo "
-  <script type='text/javascript'>
-    var d = new Date();
-    var n = d.getTime();
-    var ticks = 1200;
-    function rl() {
-      if( ticks-- > 0 ) {
-        document.getElementById('timer').style.backgroundPosition = ( 0.833 * ticks ) / 10 + '% 0px';
-        setTimeout( 'rl()', 50 );
-      } else {
-        self.location.href = 'http://unisolar.qipc.org/daten/current.php?nonce=' + n;
+
+if( ! getenv('robot') ) {
+  $urandom_handle = fopen( '/dev/urandom', 'r' );
+  $url = "http://unisolar.qipc.org/daten/current.php?nonce=";
+  for( $bytes = 8; $bytes > 0; $bytes-- ) {
+    $c = fgetc( $urandom_handle );
+    $url .= sprintf( '%02x', ord( $c ) );
+  }
+  echo "
+    <script type='text/javascript'>
+      var d = new Date();
+      var n = d.getTime();
+      var ticks = 1200;
+      function rl() {
+        if( ticks-- > 0 ) {
+          document.getElementById('timer').style.backgroundPosition = ( 0.833 * ticks ) / 10 + '% 0px';
+          setTimeout( 'rl()', 50 );
+        } else {
+          self.location.href = '$url';
+        }
       }
-    }
-    setTimeout( 'rl()', 50 );
-  </script>
-  </body>
-  </html>
-";
+      setTimeout( 'rl()', 50 );
+    </script>
+  ";
+}
+
+echo "</body></html>";
 
 ?>
