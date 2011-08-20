@@ -360,7 +360,7 @@ function day_graph( $Y, $m, $d, $caption = '' ) {
     sscanf( $Hs, '%u', & $Hi );
     if( $f[ 0 ] === $ts ) {
       if( $Hs !== $Hs_last ) {
-        $link = inlink( array( 'H' => max( $Hi, 0 ) ) );
+        $link = ( ( $Hs >= 2 ) ? inlink( array( 'H' => max( $Hi, 0 ) ) ) : '' );
         $Hs_last = $Hs;
       }
       $data[] = array(
@@ -731,7 +731,8 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       printf( "<tr><th>Leistung:</th><td class='number'>%s</td><td class='unit'>kW</tr>", $cp );
       printf( "<tr><th>Arbeit heute:</th><td class='number'>%s</td><td class='unit'>kWh</td></tr>", $dt );
       printf( "<tr><th>Arbeit gesamt:</th><td class='number'>%s</td><td class='unit'>MWh</td></tr>", $gt );
-      printf( "<tr><th style='padding-top:2px;'>Rohdaten:</th><td  style='padding-top:2px;' colspan='2'><a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></td></tr>" );
+      if( is_readable( "$Ys/$ms/raw.$Ys$ms$ds.csv" ) )
+        printf( "<tr><th style='padding-top:2px;'>Rohdaten:</th><td  style='padding-top:2px;' colspan='2'><a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></td></tr>" );
       echo "</table>";
       // }
     }
@@ -739,7 +740,8 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   } else {
     echo "<div class='smallskip'>historische Ansicht $Ys$ms$ds.$Hs --- 
          <a href='" . inlink( 'current' ) ."'>aktuelle Daten zeigen</a></div>";
-    echo "<div class='smallskip'>Rohdaten: <a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></div>";
+    if( is_readable( "$Ys/$ms/raw.$Ys$ms$ds.csv" ) )
+      echo "<div class='smallskip'>Rohdaten: <a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></div>";
   }
 
   echo "</td></tr></table>";
@@ -748,7 +750,8 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   if( $mi > 1 )
     echo "<a href='".inlink( array( 'm' => $mi - 1 ) )."'>&lt;&lt&lt</a>";
   echo "</span><span class='td'>Monatsproduktion $Ys$ms</span><span class='td gap'>";
-  if( $mi < 12 )
+  // if( ( $mi < 12 ) && ( $Yi * 10000 + ( $mi + 1 ) * 100 + $di <= $Yn * 10000 + $mn * 100 + $dn ) )
+  if( ( $mi < 12 ) )
     echo "<a href='".inlink( array( 'm' => $mi + 1 ) )."'>&gt;&gt&gt</a>";
   echo "</span></h4>
     <div id='monthgraph'> " . month_graph( $Yi, $mi, false ) . "</div>
@@ -758,6 +761,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   if( $di > 1 )
     echo "<a href='".inlink( array( 'd' => $di - 1 ) )."'>&lt;&lt&lt</a>";
   echo "</span><span class='td'>Tagesproduktion $Ys$ms$ds</span><span class='td gap'>";
+  // if( checkdate( $mi, $di + 1, $Yi ) && ( $Yi * 10000 + $mi * 100 + $di < $Yn * 10000 + $mn * 100 + $dn ) )
   if( checkdate( $mi, $di + 1, $Yi ) )
     echo "<a href='".inlink( array( 'd' => $di + 1 ) )."'>&gt;&gt&gt</a>";
   echo "</span></h4>
@@ -809,7 +813,7 @@ if( $current ) {
         document.getElementById('timer').style.backgroundPosition = ( 0.833 * ticks ) / 10 + '% 0px';
         setTimeout( 'rl()', 50 );
       } else {
-        self.location.href = '". inlink( 'current' ) ."';
+        self.location.href = '". preg_replace( '/&amp;/', '&', inlink( 'current' ) ) ."';
       }
     }
     setTimeout( 'rl()', 50 );
