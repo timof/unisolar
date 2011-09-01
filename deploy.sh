@@ -20,7 +20,6 @@ chmod 700 monitoring/c
 chmod 600 monitoring/FTPD.tmp
 chmod 700 monitoring/json.download
 chmod 600 monitoring/channels
-chmod 644 monitoring/tmp
 chmod 600 monitoring/t
 chmod 600 monitoring/out
 chmod 600 monitoring/FTPD.tmp.old
