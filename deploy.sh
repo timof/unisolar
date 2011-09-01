@@ -16,9 +16,11 @@ chmod 600 monitoring/exp
 chmod 700 monitoring/csv.download
 chmod 700 monitoring/xml.download
 chmod 700 monitoring/fix
+chmod 700 monitoring/c
 chmod 600 monitoring/FTPD.tmp
 chmod 700 monitoring/json.download
 chmod 600 monitoring/channels
+chmod 600 monitoring/t
 chmod 600 monitoring/out
 chmod 600 monitoring/FTPD.tmp.old
 chmod 600 monitoring/download.log
@@ -40,6 +42,7 @@ chmod 600 daten/1current.php
 chmod 644 daten/c2.php
 chmod 644 daten/gray.png
 chmod 644 daten/last_production
+chmod 700 daten/deploy.sh
 chmod 644 daten/.last
 chmod 644 daten/lens.php
 chmod 777 daten/yellow.png

@@ -24,61 +24,110 @@ mkdir -m 755 $datadir/$Y/$m 2>/dev/null
 touch $datadir/$Y/$m/$d.txt
 chmod 644 $datadir/$Y/$m/$d.txt
 
-if wget --ftp-user=user --ftp-password=`cat passwd` -O tmp "ftp://h6pv.qipc.org/CSV/$Y/$m/$Y-$m-$d.csv" ; then
-
-  lastline=`tail -n 1 tmp`
-
-  echo "$utc: OK:" >> exp
-  echo "$lastline" >> exp
-  chmod 644 tmp
-  mv tmp "$datadir/$Y/$m/raw.$Y$m$d.csv"
-
-  echo "$lastline" | {
-    IFS=';' read c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
-                 c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
-                 c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 \
-                 c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 \
-                 c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 \
-                 c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 \
-                 c60 c61 c62 c63 c64 c65 c66 c67
-
-    timestamp="$c00"
-
-    work_total=`printf %.3f "$c01"`
-    power=`printf %.0f 0"$c05"`
-
-    work_1=`printf %.0f 0"$c25"`
-    power_1_1=`printf %.0f 0"$c38"`
-    power_1_2=`printf %.0f 0"$c39"`
-
-    work_2=`printf %.0f 0"$c48"`
-    power_2_1=`printf %.0f 0"$c61"`
-    power_2_2=`printf %.0f 0"$c62"`
-  
-    work_total_kWh=`echo "2k $work_total 1000 * p q" | dc`
-    work_total_MWh=$work_total
-
-    work_total_kWh=`printf %.0f "$work_total_kWh"`
-    work_total_MWh=`printf %.3f "$work_total_MWh"`
-  
-    hi=`echo "$timestamp" | sed 's/^...........\(..\).*/\1/'`
-    mi=`echo "$timestamp" | sed 's/^..............\(..\).*/\1/'`
-
-    # fix time zone insanities (should work east of greenwhich)
-    #
-    while [ \( "$hi" -ge 1 \) -a \( "$hi$mi" -ge "$H$M" \) ] ; do
-      $hi=$((hi-1))
-    done
-
-    echo "$hi$mi: $work_total_MWh, $power [$work_1 $power_1_1 $power_1_2] [$work_2 $power_2_1 $power_2_2]"
-    if grep "^$hi$mi " $datadir/$Y/$m/$d.txt &>/dev/null ; then
-      : nop
-    else
-      echo "$hi$mi $work_total $power $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> $datadir/$Y/$m/$d.txt
-    fi
-  }
-
-else
-  echo "$utc: FAILED" >> exp
+if ! wget --ftp-user=user --ftp-password=`cat passwd` -O tmp "ftp://h6pv.qipc.org/CSV/$Y/$m/$Y-$m-$d.csv" ; then
+  echo "$utc: FAILED 1" >> exp
+  exit 1
 fi
+
+headerline=`grep '^;Metering.TotWhOut;Operation.GriSwCnt;' < tmp`
+
+IFS=';' read c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
+             c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
+             c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 \
+             c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 \
+             c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 \
+             c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 \
+             c60 c61 c62 c63 c64 c65 c66 c67 < <(echo "$headerline")
+
+for (( i=0 ; i <= 67 ; i++ )) ; do
+  n=`printf 'c%02u' $i`
+  tag=`eval echo '$'$n`
+  case "$tag" in
+    'Metering.TotWhOut' )
+      if [ ! "$i_total_work" ] ; then
+        i_total_work=$i
+      fi
+    ;;
+    'GridMs.TotW' )
+      if [ ! "$i_total_power" ] ; then
+        i_total_power=$i
+      fi
+    ;;
+    'DcMs.Watt[001]' )
+      if [ "$i_1_1" ] ; then
+        i_2_1=$i
+      else
+        i_1_1=$i
+      fi
+    ;;
+    'DcMs.Watt[002]' )
+      if [ "$i_1_2" ] ; then
+        i_2_2=$i
+      else
+        i_1_2=$i
+      fi
+    ;;
+  esac
+done
+
+if echo ",$i_total_power,$i_total_work,$i_1_1,$i_1_2,$i_2_1,$i_2_2," | grep -q ',,' ; then
+  echo "$utc: FAILED 2" >> exp
+  exit 2
+fi
+
+lastline=`tail -n 1 tmp`
+
+echo "$utc: OK:" >> exp
+echo "$lastline" >> exp
+chmod 644 tmp
+mv tmp "$datadir/$Y/$m/raw.$Y$m$d.csv"
+
+IFS=';' read c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
+             c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
+             c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 \
+             c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 \
+             c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 \
+             c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 \
+             c60 c61 c62 c63 c64 c65 c66 c67 < <(echo "$lastline")
+
+timestamp="$c00"
+
+n_total_power=`printf 'c%02u' $i_total_power`
+n_total_work=`printf 'c%02u' $i_total_work`
+n_1_1=`printf 'c%02u' $i_1_1`
+n_1_2=`printf 'c%02u' $i_1_2`
+n_2_1=`printf 'c%02u' $i_2_1`
+n_2_2=`printf 'c%02u' $i_2_2`
+power_total=`eval echo '$'$n_total_power`
+work_total=`eval echo '$'$n_total_work`
+power_1_1=`eval echo '$'$n_1_1`
+power_1_2=`eval echo '$'$n_1_2`
+power_2_1=`eval echo '$'$n_2_1`
+power_2_2=`eval echo '$'$n_2_2`
+
+# echo "$timestamp: $work_total, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]"
+
+work_total_kWh=`echo "2k $work_total 1000 * p q" | dc`
+work_total_MWh=$work_total
+
+work_total_kWh=`printf %.0f "$work_total_kWh"`
+work_total_MWh=`printf %.3f "$work_total_MWh"`
+  
+hi=`echo "$timestamp" | sed 's/^...........\(..\).*/\1/'`
+mi=`echo "$timestamp" | sed 's/^..............\(..\).*/\1/'`
+
+# fix time zone insanities (should work east of greenwhich)
+#
+while [ \( "$hi" -ge 1 \) -a \( "$hi$mi" -ge "$H$M" \) ] ; do
+  $hi=$((hi-1))
+done
+
+# echo "$hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]"
+
+if grep "^$hi$mi " $datadir/$Y/$m/$d.txt &>/dev/null ; then
+  : nop
+else
+  echo "$hi$mi $work_total $power_total $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> $datadir/$Y/$m/$d.txt
+fi
+
 
