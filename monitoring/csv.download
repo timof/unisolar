@@ -70,6 +70,8 @@ for (( i=0 ; i <= 67 ; i++ )) ; do
   esac
 done
 
+echo "fields: ,$i_total_power,$i_total_work,$i_1_1,$i_1_2,$i_2_1,$i_2_2," 
+
 if echo ",$i_total_power,$i_total_work,$i_1_1,$i_1_2,$i_2_1,$i_2_2," | grep -q ',,' ; then
   echo "$utc: FAILED 2" >> exp
   exit 2
@@ -80,7 +82,7 @@ lastline=`tail -n 1 tmp`
 echo "$utc: OK:" >> exp
 echo "$lastline" >> exp
 chmod 644 tmp
-mv tmp "$datadir/$Y/$m/raw.$Y$m$d.csv"
+### mv tmp "$datadir/$Y/$m/raw.$Y$m$d.csv"
 
 IFS=';' read c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
              c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
@@ -105,7 +107,7 @@ power_1_2=`eval echo '$'$n_1_2`
 power_2_1=`eval echo '$'$n_2_1`
 power_2_2=`eval echo '$'$n_2_2`
 
-# echo "$timestamp: $work_total, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]"
+echo "$timestamp: $work_total, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]"
 
 work_total_kWh=`echo "2k $work_total 1000 * p q" | dc`
 work_total_MWh=$work_total
@@ -122,12 +124,12 @@ while [ \( "$hi" -ge 1 \) -a \( "$hi$mi" -ge "$H$M" \) ] ; do
   $hi=$((hi-1))
 done
 
-# echo "$hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]"
+echo "$hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]"
 
 if grep "^$hi$mi " $datadir/$Y/$m/$d.txt &>/dev/null ; then
   : nop
 else
-  echo "$hi$mi $work_total $power_total $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> $datadir/$Y/$m/$d.txt
+  echo "$hi$mi $work_total_MWh $power_total $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> $datadir/$Y/$m/$d.txt
 fi
 
 

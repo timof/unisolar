@@ -18,8 +18,8 @@ function random_hex_string( $bytes ) {
   return $s;
 }
 
-if( getenv( 'robot' ) ) {
-  if( $_GET['nonce'] ) {
+if( isset( $_GET['nonce'] ) ) {
+  if( getenv( 'robot' ) ) {
     header( 'HTTP/1.0 410 gone' );
     return;
   }
