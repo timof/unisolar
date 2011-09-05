@@ -10,7 +10,7 @@
 datadir=../daten
 
 utc=`utc`
-echo "$utc" >> download.log
+echo "$utc:" | tee -a exp
 
 Y=`echo $utc|sed 's/^\(....\).*$/\1/'`
 m=`echo $utc|sed 's/^....\(..\).*$/\1/'`
@@ -24,117 +24,134 @@ mkdir -m 755 $datadir/$Y/$m 2>/dev/null
 touch $datadir/$Y/$m/$d.txt
 chmod 644 $datadir/$Y/$m/$d.txt
 
-if ! wget --ftp-user=user --ftp-password=`cat passwd` -O tmp "ftp://h6pv.qipc.org/CSV/$Y/$m/$Y-$m-$d.csv" ; then
-  echo "$utc: FAILED 1" >> exp
+rm csv.out
+touch csv.out
+chmod 644 csv.out
+
+echo "`utc`: begin wget" | tee -a exp
+if ! wget --ftp-user=user --ftp-password=`cat passwd` -O csv.tmp "ftp://h6pv.qipc.org/CSV/$Y/$m/$Y-$m-$d.csv" ; then
+  echo "`utc`: FAILED 1" | tee -a exp
   exit 1
 fi
+echo "`utc`: wget finished" | tee -a exp
 
-headerline=`grep '^;Metering.TotWhOut;Operation.GriSwCnt;' < tmp`
+headerline=false
+while IFS=';' read \
+  c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
+  c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
+  c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 \
+  c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 \
+  c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 \
+  c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 \
+  c60 c61 c62 c63 c64 c65 c66 c67 \
+; do
 
-IFS=';' read c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
-             c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
-             c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 \
-             c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 \
-             c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 \
-             c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 \
-             c60 c61 c62 c63 c64 c65 c66 c67 < <(echo "$headerline")
+  if ! $headerline ; then
 
-for (( i=0 ; i <= 67 ; i++ )) ; do
-  n=`printf 'c%02u' $i`
-  tag=`eval echo '$'$n`
-  case "$tag" in
-    'Metering.TotWhOut' )
-      if [ ! "$i_total_work" ] ; then
-        i_total_work=$i
+    if [ "$c01" = "Metering.TotWhOut" ] ; then
+      echo "`utc`: headerline detected:" | tee -a exp
+
+      for (( i=0 ; i <= 67 ; i++ )) ; do
+        n=`printf 'c%02u' $i`
+        tag=`eval echo '$'$n`
+        case "$tag" in
+          'Metering.TotWhOut' )
+            if [ ! "$i_total_work" ] ; then
+              i_total_work=$i
+            fi
+          ;;
+          'GridMs.TotW' )
+            if [ ! "$i_total_power" ] ; then
+              i_total_power=$i
+            fi
+          ;;
+          'DcMs.Watt[001]' )
+            if [ "$i_1_1" ] ; then
+              i_2_1=$i
+            elif [ "$i_0_1" ] ; then
+              i_1_1=$i
+            else
+              i_0_1=$i
+            fi
+          ;;
+          'DcMs.Watt[002]' )
+            if [ "$i_1_2" ] ; then
+              i_2_2=$i
+            elif [ "$i_0_2" ] ; then
+              i_1_2=$i
+            else
+              i_0_2=$i
+            fi
+          ;;
+        esac
+      done
+
+      echo "`utc`: fields detected: [$i_total_power,$i_total_work,$i_1_1,$i_1_2,$i_2_1,$i_2_2]"  | tee -a exp
+      if echo ",$i_total_power,$i_total_work,$i_1_1,$i_1_2,$i_2_1,$i_2_2," | grep -q ',,' ; then
+        echo "`utc`: FAILED: malformed headerline" | tee -a exp
+        exit 2
       fi
-    ;;
-    'GridMs.TotW' )
-      if [ ! "$i_total_power" ] ; then
-        i_total_power=$i
-      fi
-    ;;
-    'DcMs.Watt[001]' )
-      if [ "$i_1_1" ] ; then
-        i_2_1=$i
-      elif [ "$i_0_1" ] ; then
-        i_1_1=$i
-      else
-        i_0_1=$i
-      fi
-    ;;
-    'DcMs.Watt[002]' )
-      if [ "$i_1_2" ] ; then
-        i_2_2=$i
-      elif [ "$i_0_2" ] ; then
-        i_1_2=$i
-      else
-        i_0_2=$i
-      fi
-    ;;
-  esac
-done
+      headerline=true
+      chmod 644 csv.tmp
+      mv csv.tmp "$datadir/$Y/$m/raw.$Y$m$d.csv"
+    fi
+    continue
+  fi
 
+  timestamp="$c00"
 
-echo "$utc: OK:" >> exp
-echo "$utc: fields: ,$i_total_power,$i_total_work,$i_1_1,$i_1_2,$i_2_1,$i_2_2,"  >> exp
-
-if echo ",$i_total_power,$i_total_work,$i_1_1,$i_1_2,$i_2_1,$i_2_2," | grep -q ',,' ; then
-  echo "$utc: FAILED 2" >> exp
-  exit 2
-fi
-
-lastline=`tail -n 1 tmp`
-
-echo "$utc: $lastline" >> exp
-chmod 644 tmp
-mv tmp "$datadir/$Y/$m/raw.$Y$m$d.csv"
-
-IFS=';' read c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
-             c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
-             c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 \
-             c30 c31 c32 c33 c34 c35 c36 c37 c38 c39 \
-             c40 c41 c42 c43 c44 c45 c46 c47 c48 c49 \
-             c50 c51 c52 c53 c54 c55 c56 c57 c58 c59 \
-             c60 c61 c62 c63 c64 c65 c66 c67 < <(echo "$lastline")
-
-timestamp="$c00"
-
-n_total_power=`printf 'c%02u' $i_total_power`
-n_total_work=`printf 'c%02u' $i_total_work`
-n_1_1=`printf 'c%02u' $i_1_1`
-n_1_2=`printf 'c%02u' $i_1_2`
-n_2_1=`printf 'c%02u' $i_2_1`
-n_2_2=`printf 'c%02u' $i_2_2`
-power_total=`eval echo '$'$n_total_power`
-work_total=`eval echo '$'$n_total_work`
-power_1_1=`eval echo '$'$n_1_1`
-power_1_2=`eval echo '$'$n_1_2`
-power_2_1=`eval echo '$'$n_2_1`
-power_2_2=`eval echo '$'$n_2_2`
-
-echo "$utc: $work_total, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" >> exp
-
-work_total_kWh=`echo "2k $work_total 1000 * p q" | dc`
-work_total_MWh=$work_total
-
-work_total_kWh=`printf %.0f "$work_total_kWh"`
-work_total_MWh=`printf %.3f "$work_total_MWh"`
   
-hi=`echo "$timestamp" | sed 's/^...........\(..\).*/\1/'`
-mi=`echo "$timestamp" | sed 's/^..............\(..\).*/\1/'`
+  if [[ "$timestamp" =~ '20'..-..-..' '.. ]] ; then
+    echo "`utc`: looks like valid timestamp: [$timestamp]" | tee -a exp
+  else
+    echo "`utc`: invalid timestamp [$timestamp], skipping line" | tee -a exp
+    continue
+  fi
 
-# fix time zone insanities (should work east of greenwhich)
-#
-while [ \( "$hi" -ge 1 \) -a \( "$hi$mi" -ge "$H$M" \) ] ; do
-  $hi=$((hi-1))
-done
+  n_total_power=`printf 'c%02u' $i_total_power`
+  n_total_work=`printf 'c%02u' $i_total_work`
+  n_1_1=`printf 'c%02u' $i_1_1`
+  n_1_2=`printf 'c%02u' $i_1_2`
+  n_2_1=`printf 'c%02u' $i_2_1`
+  n_2_2=`printf 'c%02u' $i_2_2`
 
-echo "$hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" >> exp
+  power_total=`eval echo '$'$n_total_power`
+  work_total=`eval echo '$'$n_total_work`
+  power_1_1=`eval echo '$'$n_1_1`
+  power_1_2=`eval echo '$'$n_1_2`
+  power_2_1=`eval echo '$'$n_2_1`
+  power_2_2=`eval echo '$'$n_2_2`
 
-if grep "^$hi$mi " $datadir/$Y/$m/$d.txt &>/dev/null ; then
-  : nop
-else
-  echo "$hi$mi $work_total_MWh $power_total $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> $datadir/$Y/$m/$d.txt
-fi
+  [ "$power_total" ] || power_total=0
+  [ "$work_total" ] || work_total=0
+  [ "$power_1_1" ] || power_1_1=0
+  [ "$power_1_2" ] || power_1_2=0
+  [ "$power_2_1" ] || power_2_1=0
+  [ "$power_2_2" ] || power_2_2=0
+  
+  echo "`utc`: line parsed: $imestamp: $work_total, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
 
+  work_total_kWh=`echo "2k $work_total 1000 * p q" | dc`
+  work_total_MWh=$work_total
+  
+  work_total_kWh=`printf %.0f "$work_total_kWh"`
+  work_total_MWh=`printf %.3f "$work_total_MWh"`
+    
+  hi=`echo "$timestamp" | sed 's/^...........\(..\).*/\1/'`
+  mi=`echo "$timestamp" | sed 's/^..............\(..\).*/\1/'`
+  
+  # fix time zone insanities (should work east of greenwhich)
+  #
+  while [ \( "$hi" -ge 1 \) -a \( "$hi$mi" -ge "$H$M" \) ] ; do
+    $hi=$((hi-1))
+  done
+
+  echo "`utc`: canonical units: $hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
+  echo "$hi$mi $work_total_MWh $power_total $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> csv.out
+
+done < csv.tmp
+
+mv csv.out $datadir/$Y/$m/$d.txt
+
+echo "`utc`: done." | tee -a exp
 
