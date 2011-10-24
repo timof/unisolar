@@ -287,12 +287,15 @@ function string_graph( $Y, $m, $d, $H, $string, $cheight = 62, $cwidth = 3 ) {
   }
   $data = array();
   $n = 0;
+  $todayWh = 0;
   foreach( $lines as $l ) {
     $f = explode( ' ', $l );
+    $powerW = $f[ $column ];
+    $todayWh += $powerW / 12.0;
     sscanf( substr( $f[ 0 ], 0, 2 ), '%u', & $hi );
     if( ( $H > $hi ) || ( $hi > $H + 2 ) )
       continue;
-    $data[] = array( null, $f[ $column ] / $scale, sprintf( '%04uUTC: %u W', $f[ 0 ], $f[ $column ] ) );
+    $data[] = array( null, $powerW / $scale, sprintf( '%04uUTC: %u W / day: %.1lf kWh', $f[ 0 ], $powerW, $todayWh / 1000.0 ) );
   }
   sscanf( $f[ 0 ], '%u', & $t );
   $t += 5;
@@ -341,6 +344,8 @@ function day_graph( $Y, $m, $d, $caption = '' ) {
   $scale = 29640 / $cheight;
 
   $data = array();
+  $todayWh = 0;
+  $powerW = 0;
   $Hs_last = '-';
   $t = 0;
   $n = 0;
@@ -363,14 +368,17 @@ function day_graph( $Y, $m, $d, $caption = '' ) {
         $link = ( ( $Hs >= 2 ) ? inlink( array( 'H' => max( $Hi, 0 ) ) ) : '' );
         $Hs_last = $Hs;
       }
+      $powerW = $f[ 2 ];
+      $todayWh += $powerW / 12.0;
       $data[] = array(
         $Hs
       , $f[ 2 ] / $scale
-      , sprintf( '%04uUTC: %u W', $f[0], $f[ 2 ] )
+      , sprintf( '%04uUTC: %u W / day: %.1lf kWh', $f[0], $f[ 2 ], $todayWh / 1000.0 )
       , $link
       , ( $GLOBALS['Hi'] <= $Hi + 2 ) && ( $GLOBALS['Hi'] >= $Hi )
       );
     } else {
+      $todayWh += $powerW / 12.0;
       $data[] = array(
         sprintf( '%02u', $t / 100 )
       , null
@@ -609,8 +617,10 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
     table.graph th.vbar {
       font-size:10pt;
       font-family:arial,sans-serif;
-      outline:1px solid black;
-      border:0px;
+      border:1px solid black;
+      outline:0px;
+      padding-top:0ex;
+      margin-top:0ex;
     }
     table.graph th.vbar.active {
       background-color:#7066cc;
