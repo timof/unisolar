@@ -102,9 +102,10 @@ while IFS=';' read \
 
   
   if [[ "$timestamp" =~ '20'..-..-..' '.. ]] ; then
-    echo "`utc`: looks like valid timestamp: [$timestamp]" | tee -a exp
+    # echo "`utc`: looks like valid timestamp: [$timestamp]" | tee -a exp
+    : nop
   else
-    echo "`utc`: invalid timestamp [$timestamp], skipping line" | tee -a exp
+    # echo "`utc`: invalid timestamp [$timestamp], skipping line" | tee -a exp
     continue
   fi
 
@@ -129,7 +130,7 @@ while IFS=';' read \
   [ "$power_2_1" ] || power_2_1=0
   [ "$power_2_2" ] || power_2_2=0
   
-  echo "`utc`: line parsed: $imestamp: $work_total, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
+  # echo "`utc`: line parsed: $imestamp: $work_total, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
 
   work_total_kWh=`echo "2k $work_total 1000 * p q" | dc`
   work_total_MWh=$work_total
@@ -146,7 +147,7 @@ while IFS=';' read \
     $hi=$((hi-1))
   done
 
-  echo "`utc`: canonical units: $hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
+  # echo "`utc`: canonical units: $hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
   echo "$hi$mi $work_total_MWh $power_total $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> csv.out
 
 done < csv.tmp
