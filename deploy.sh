@@ -26,6 +26,7 @@ chmod 600 monitoring/FTPD.tmp.old
 chmod 600 monitoring/download.log
 chmod 700 monitoring/j
 chmod 600 monitoring/passwd
+chmod 600 monitoring/references.php
 chmod 600 monitoring/sample
 chmod 700 monitoring/zip
 chmod 600 monitoring/zip/2011-06-20_131000.xml
@@ -44,6 +45,7 @@ chmod 644 daten/gray.png
 chmod 644 daten/last_production
 chmod 700 daten/deploy.sh
 chmod 644 daten/.last
+chmod 644 daten/c.php
 chmod 644 daten/lens.php
 chmod 777 daten/yellow.png
 chmod 777 daten/last

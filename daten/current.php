@@ -47,11 +47,22 @@ function day_graph( $Y, $m, $d, $caption = '' ) {
   $lines = file( "$Y/$m/$d.txt" );
 
   $data = array();
-  $n = 0;
+
+  $t = 0;
+  $f = explode( ' ', $lines[ 0 ] );
+  while( $t < $f[ 0 ] ) {
+    $t += 5;
+    if( $t % 100 >= 60 ) {
+      $t += 40;
+    }
+    $data[] = array( sprintf( '%02u', $t / 100 ), null, 'n/a' );
+  }
+
   foreach( $lines as $l ) {
     $f = explode( ' ', $l );
     $data[] = array( substr( $f[ 0 ], 0, 2 ), $f[ 2 ] / 300, sprintf( '%04uUTC: %u W', $f[0], $f[ 2 ] ) );
   }
+
   $t = $f[ 0 ];
   while( $t < 2355 ) {
     $t += 5;
