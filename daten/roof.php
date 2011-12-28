@@ -425,14 +425,15 @@ function month_graph( $Y, $m, $caption = '' ) {
   return vbar_graph( $data, 110, 30, $caption );
 }
 
-function year_graph( $Y, $caption = '' ) {
+function year_graph( $Y, $m, $Yf, $mf, $caption = '' ) {
 
+  $def_caption = sprintf( "Jahresproduktion %04u/%04u", $Y, $Yf );
   if( ( ! $caption ) && ( $caption !== false ) ) {
-    $caption = sprintf( "Jahresproduktion %04u", $Y );
+    $caption = $def_caption;
   }
 
   $data = array();
-  for( $m = 1; $m <= 12; $m++ ) {
+  while( $Y * 100 + $m <= $Yf * 100 + $mf ) {
     $val = monthly_production_kWh( $Y, $m );
 //     $path1  = sprintf( "%04u/%02u/%02u.txt", $Y, $m, 1 );
 //     for( $d = 31; $d >= 1; $d-- ) {
@@ -446,18 +447,23 @@ function year_graph( $Y, $caption = '' ) {
 //       $lines = file( $path2 );
 //       $f2 = explode( ' ', $lines[ count($lines) - 1 ] );
 //       $val = $f2[ 1 ] - $f1[ 1 ];
-    $link = inlink( array( 'm' => $m ) );
+//     }
+    $link = inlink( array( 'm' => $m, 'Y' => $Y ) );
     if( $val !== false ) {
-       $data[] = array(
-         sprintf( "%02u", $m )
-       , $val / 50
-       , sprintf( '%04u%02u: %u kWh', $Y, $m, $val )
-       , $link
-       , $GLOBALS['mi'] == $m
-       );
-     } else {
-       $data[] = array( sprintf( '%02u', $m ), null, 'n/a', '', $GLOBALS['m'] == $m );
-     }
+      $data[] = array(
+        sprintf( "%02u", $m )
+      , $val / 50
+      , sprintf( '%04u%02u: %u kWh', $Y, $m, $val )
+      , $link
+      , ( ( $GLOBALS['mi'] == $m ) && ( $GLOBALS['Yi'] == $Y ) )
+      );
+    } else {
+      $data[] = array( sprintf( '%02u', $m ), null, 'n/a', '', $GLOBALS['m'] == $m );
+    }
+    if( ++$m > 12 ) {
+      $m = 1;
+      $Y++;
+    }
   }
   return vbar_graph( $data, 100, 30, $caption );
 }
@@ -689,14 +695,27 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
 
   echo "<table class='layout'><tr><td>";
   echo "<h4 class='view' style='padding-top:2px;'><span class='td gap'>";
-  if( $Yi > 2011 )
+  $Y2 = $Yi;
+  $m2 = 12;
+  $m1 = 1;
+  if( $Yi > 2011 ) {
+    $Y1 = $Yi - 1;
     echo "<a href='".inlink( array( 'Y' => $Yi - 1 ) )."'>&lt;&lt&lt</a>";
-  echo "</span><span class='td'>Jahresproduktion $Ys</span><span class='td gap'>";
+    echo "</span><span class='td'>Jahresproduktion $Y1/$Y2</span><span class='td gap'>";
+  } else {
+    $Y1 = $Yi;
+    echo "</span><span class='td'>Jahresproduktion $Y1</span><span class='td gap'>";
+  }
+  if( $Y1 > 2011 ) {
+    $m1 = 1;
+  } else {
+    $m1 = 1;
+  }
   if( $Yi < $Yn )
     echo "<a href='".inlink( array( 'Y' => $Yi + 1 ) )."'>&gt;&gt&gt</a>";
   echo "</span>
         </h4>
-    <div id='yeargraph'>" . year_graph( $Yi, false ) . "</div>
+    <div id='yeargraph'>" . year_graph( $Y1, $m1, $Y2, $m2, false ) . "</div>
   ";
   echo "</td><td style='vertical-align:top;padding:1ex 1em 1ex 1em;font-size:12pt;'>";
 
