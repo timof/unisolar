@@ -29,6 +29,7 @@ touch csv.out
 chmod 644 csv.out
 
 echo "`utc`: begin wget" | tee -a exp
+# cp ../daten/2011/11/raw.20111108.csv csv.tmp
 if ! wget --ftp-user=user --ftp-password=`cat passwd` -O csv.tmp "ftp://h6pv.qipc.org/CSV/$Y/$m/$Y-$m-$d.csv" ; then
   echo "`utc`: FAILED 1" | tee -a exp
   exit 1
@@ -116,12 +117,22 @@ while IFS=';' read \
   n_2_1=`printf 'c%02u' $i_2_1`
   n_2_2=`printf 'c%02u' $i_2_2`
 
-  power_total=`eval echo '$'$n_total_power`
   work_total=`eval echo '$'$n_total_work`
   power_1_1=`eval echo '$'$n_1_1`
   power_1_2=`eval echo '$'$n_1_2`
   power_2_1=`eval echo '$'$n_2_1`
   power_2_2=`eval echo '$'$n_2_2`
+
+  # dirty kludge if the total power col is missing (what the fuck are they doing????)
+  # (the parser then catches a high-numbered per-inverter col instead):
+  #
+  if [ "$i_total_power" -lt 10 ] ; then
+    power_total=`eval echo '$'$n_total_power`
+  else
+    # echo 2 k 0$power_1_1 0$power_1_2 + 0$power_2_1 + 0$power_2_2 + p q 
+    # echo 2 k 0$power_1_1 0$power_1_2 + 0$power_2_1 + 0$power_2_2 + p q  | dc
+    power_total=`echo 2 k 0$power_1_1 0$power_1_2 + 0$power_2_1 + 0$power_2_2 + p q | dc`
+  fi
 
   [ "$power_total" ] || power_total=0
   [ "$work_total" ] || work_total=0
