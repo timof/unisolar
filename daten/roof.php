@@ -295,7 +295,11 @@ function string_graph( $Y, $m, $d, $H, $string, $cheight = 62, $cwidth = 3 ) {
     sscanf( substr( $f[ 0 ], 0, 2 ), '%u', & $hi );
     if( ( $H > $hi ) || ( $hi > $H + 2 ) )
       continue;
-    $data[] = array( null, $powerW / $scale, sprintf( '%04uUTC: %u W / day: %.1lf kWh', $f[ 0 ], $powerW, $todayWh / 1000.0 ) );
+    $data[] = array(
+      null
+    , $powerW / $scale
+    , sprintf( '%04uUTC: %u W / day: %.1lf kWh', $f[ 0 ], $powerW, $todayWh / 1000.0 )
+    );
   }
   sscanf( $f[ 0 ], '%u', & $t );
   $t += 5;
@@ -320,7 +324,7 @@ function roof_graph( $Y, $m, $d, $H, $caption = '' ) {
 }
 
 
-function day_graph( $Y, $m, $d, $caption = '' ) {
+function day_graph( $Y, $m, $d, $Hmark, $caption = '' ) {
   if( ! checkdate( $m, $d, $Y ) )
     return false;
 
@@ -336,7 +340,7 @@ function day_graph( $Y, $m, $d, $caption = '' ) {
     return false;
 
   $cwidth = 3;
-  if( $cwidth >= 3 ) {
+  if( $cwidth >= 2 ) {
     $cheight = 110;
   } else {
     $cheight = 30;
@@ -375,7 +379,7 @@ function day_graph( $Y, $m, $d, $caption = '' ) {
       , $f[ 2 ] / $scale
       , sprintf( '%04uUTC: %u W / day: %.1lf kWh', $f[0], $f[ 2 ], $todayWh / 1000.0 )
       , $link
-      , ( $GLOBALS['Hi'] <= $Hi + 2 ) && ( $GLOBALS['Hi'] >= $Hi )
+      , ( $Hmark <= $Hi + 2 ) && ( $Hmark >= $Hi )
       );
     } else {
       $todayWh += $powerW / 12.0;
@@ -384,7 +388,7 @@ function day_graph( $Y, $m, $d, $caption = '' ) {
       , null
       , 'n/a'
       , ''
-      , ( $GLOBALS['Hi'] <= (int)($t / 100) + 2 ) && ( $GLOBALS['Hi'] >= (int)($t / 100) )
+      , ( $Hmark <= (int)($t / 100) + 2 ) && ( $Hmark >= (int)($t / 100) )
       );
     }
     $t += 5;
@@ -395,7 +399,7 @@ function day_graph( $Y, $m, $d, $caption = '' ) {
   return vbar_graph( $data, $cheight, $cwidth, $caption );
 }
 
-function month_graph( $Y, $m, $caption = '' ) {
+function month_graph( $Y, $m, $di, $caption = '' ) {
   if( ! checkdate( $m, 1, $Y ) )
     return false;
 
@@ -408,24 +412,25 @@ function month_graph( $Y, $m, $caption = '' ) {
   while( checkdate( $m, $d, $Y ) ) {
     $val = daily_production( $Y, $m, $d );
     if( $val !== false ) {
-      $link = inlink( array( 'd' => $d ) );
+      $link = inlink( array( 'd' => $d, 'm' => $m, 'Y' => $Y ) );
       $data[] = array(
         sprintf( "%02u", $d )
       , $val * 0.5
       , sprintf( '%04u%02u%02u: %u kWh', $Y, $m, $d, $val )
       , $link
-      , $GLOBALS['di'] == $d
+      , $d == $di
       );
     } else {
-      $data[] = array( sprintf( '%02u', $d ), null, 'n/a', '', $GLOBALS['di'] == $d );
+      $data[] = array( sprintf( '%02u', $d ), null, 'n/a', '', $d == $di );
     }
     $d++;
   }
   // var_dump( $data );
-  return vbar_graph( $data, 110, 30, $caption );
+  return vbar_graph( $data, 110, 24, $caption );
 }
 
-function year_graph( $Y, $m, $Yf, $mf, $caption = '' ) {
+function year_graph( $Y, $m, $Yf, $mf, $Ymark, $mmark, $caption = '' ) {
+  global $mn, $Yn;
 
   $def_caption = sprintf( "Jahresproduktion %04u/%04u", $Y, $Yf );
   if( ( ! $caption ) && ( $caption !== false ) ) {
@@ -448,24 +453,24 @@ function year_graph( $Y, $m, $Yf, $mf, $caption = '' ) {
 //       $f2 = explode( ' ', $lines[ count($lines) - 1 ] );
 //       $val = $f2[ 1 ] - $f1[ 1 ];
 //     }
-    $link = inlink( array( 'm' => $m, 'Y' => $Y ) );
+    $current = ( ( $mmark == $m ) && ( $Ymark == $Y ) );
     if( $val !== false ) {
       $data[] = array(
         sprintf( "%02u", $m )
       , $val / 50
       , sprintf( '%04u%02u: %u kWh', $Y, $m, $val )
-      , $link
-      , ( ( $GLOBALS['mi'] == $m ) && ( $GLOBALS['Yi'] == $Y ) )
+      , inlink( array( 'm' => $m, 'Y' => $Y ) )
+      , $current
       );
     } else {
-      $data[] = array( sprintf( '%02u', $m ), null, 'n/a', '', $GLOBALS['m'] == $m );
+      $data[] = array( sprintf( '%02u', $m ), null, 'n/a', '', $current );
     }
     if( ++$m > 12 ) {
       $m = 1;
       $Y++;
     }
   }
-  return vbar_graph( $data, 100, 30, $caption );
+  return vbar_graph( $data, 100, 24, $caption );
 }
 
 
@@ -537,8 +542,10 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   <meta name='robots' content='index'>
   <meta http-equiv='expires' content='0'>
   <style type='text/css'>
+    body, div, caption, th, td, span, a {
+      font-size:9pt;
+    }
     body, div, caption, th, td, span {
-      font-size:10pt;
       font-family:arial,sans-serif;
       background-color:#aabbff;
       padding:0px;
@@ -621,7 +628,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       width:1px;
     }
     table.graph th.vbar {
-      font-size:10pt;
+      font-size:9pt;
       font-family:arial,sans-serif;
       border:1px solid black;
       outline:0px;
@@ -701,11 +708,15 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   if( $Yi > 2011 ) {
     $Y1 = $Yi - 1;
     echo "<a href='".inlink( array( 'Y' => $Yi - 1 ) )."'>&lt;&lt&lt</a>";
-    echo "</span><span class='td'>Jahresproduktion $Y1/$Y2</span><span class='td gap'>";
   } else {
     $Y1 = $Yi;
-    echo "</span><span class='td'>Jahresproduktion $Y1</span><span class='td gap'>";
+    $Y2 = $Yi + 1;
   }
+  if( $Y1 == $Y2 )
+    echo "</span><span class='td'>Jahresproduktion $Y1</span><span class='td gap'>";
+  else
+    echo "</span><span class='td'>Jahresproduktion $Y1 / $Y2</span><span class='td gap'>";
+
   if( $Y1 > 2011 ) {
     $m1 = 1;
   } else {
@@ -715,9 +726,9 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
     echo "<a href='".inlink( array( 'Y' => $Yi + 1 ) )."'>&gt;&gt&gt</a>";
   echo "</span>
         </h4>
-    <div id='yeargraph'>" . year_graph( $Y1, $m1, $Y2, $m2, false ) . "</div>
+    <div id='yeargraph'>" . year_graph( $Y1, $m1, $Y2, $m2, $Yi, $mi, false ) . "</div>
   ";
-  echo "</td><td style='vertical-align:top;padding:1ex 1em 1ex 1em;font-size:12pt;'>";
+  echo "</td><td style='vertical-align:top;padding:1ex 1em 1ex 1em;font-size:10pt;'>";
 
   echo "<div class='title'><a href='http://www.unisolar-potsdam.de'>UniSolar Potsdam e.V.</a> - <a href='//www.unisolar-potsdam.de/?page_id=716'>Photovoltaik-Anlage Haus 6, Campus Golm</a></div>";
 
@@ -776,14 +787,21 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   echo "</td></tr></table>";
   
   echo "<h4 class='view'><span class='td gap'>";
-  if( $mi > 1 )
+  if( $mi > 1 ) {
     echo "<a href='".inlink( array( 'm' => $mi - 1 ) )."'>&lt;&lt&lt</a>";
+  } else if( $Yi > 2011 ) {
+    echo "<a href='".inlink( array( 'm' => 12, 'Y' => $Yi - 1 ) )."'>&lt;&lt&lt</a>";
+  }
   echo "</span><span class='td'>Monatsproduktion $Ys$ms</span><span class='td gap'>";
-  // if( ( $mi < 12 ) && ( $Yi * 10000 + ( $mi + 1 ) * 100 + $di <= $Yn * 10000 + $mn * 100 + $dn ) )
-  if( ( $mi < 12 ) )
-    echo "<a href='".inlink( array( 'm' => $mi + 1 ) )."'>&gt;&gt&gt</a>";
+  if( $Yi * 10000 + $mi * 100 < $Yn * 10000 + $mn * 100 ) {
+    if( ( $mi < 12 ) ) {
+      echo "<a href='".inlink( array( 'm' => $mi + 1 ) )."'>&gt;&gt&gt</a>";
+    } else {
+      echo "<a href='".inlink( array( 'm' => 1, 'Y' => $Yi + 1 ) )."'>&gt;&gt&gt</a>";
+    }
+  }
   echo "</span></h4>
-    <div id='monthgraph'> " . month_graph( $Yi, $mi, false ) . "</div>
+    <div id='monthgraph'> " . month_graph( $Yi, $mi, $di, false ) . "</div>
   ";
 
   echo "<h4 class='view'><span class='td gap'>";
@@ -794,7 +812,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   if( checkdate( $mi, $di + 1, $Yi ) )
     echo "<a href='".inlink( array( 'd' => $di + 1 ) )."'>&gt;&gt&gt</a>";
   echo "</span></h4>
-    <div id='daygraph'>" . day_graph( $Yi, $mi, $di, false ) . "</div>
+    <div id='daygraph'>" . day_graph( $Yi, $mi, $di, $Hi, false ) . "</div>
   ";
 
   echo "<h4 class='view'><span class='td gap'>";
