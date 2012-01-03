@@ -23,7 +23,6 @@ chmod 600 monitoring/t
 chmod 600 monitoring/out
 chmod 600 monitoring/FTPD.tmp.old
 chmod 600 monitoring/download.log
-chmod 644 monitoring/csv.out
 chmod 700 monitoring/j
 chmod 600 monitoring/passwd
 chmod 600 monitoring/references.php
@@ -33,7 +32,6 @@ chmod 600 monitoring/zip/2011-06-20_131000.xml
 chmod 600 monitoring/zip/2011-06-20_130000.xml
 chmod 600 monitoring/zip/2011-06-20_130500.xml
 chmod 600 monitoring/zip/2011-06-20_130000.zip
-chmod 600 monitoring/csv.tmp
 chmod 755 daten
 chmod 644 daten/roof.php
 chmod 644 daten/d2.php
@@ -45,7 +43,6 @@ chmod 644 daten/c2.php
 chmod 644 daten/1roof.php
 chmod 644 daten/gray.png
 chmod 644 daten/last_production
-chmod 644 daten/r.php
 chmod 700 daten/deploy.sh
 chmod 644 daten/.last
 chmod 644 daten/c.php
