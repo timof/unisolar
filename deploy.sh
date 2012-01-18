@@ -12,6 +12,7 @@ git status | grep -qF 'working directory clean' || DIRTY='-dirty'
 echo "<a href='http://github.com/timof/unisolar/commits/$COMMIT_FULL'>$BRANCH-$COMMIT$DIRTY</a>" >version.txt
 
 chmod 700 monitoring
+chmod 600 monitoring/1csv.tmp
 chmod 600 monitoring/exp
 chmod 700 monitoring/csv.download
 chmod 700 monitoring/xml.download
@@ -35,7 +36,6 @@ chmod 600 monitoring/zip/2011-06-20_130000.zip
 chmod 755 daten
 chmod 644 daten/roof.php
 chmod 644 daten/d2.php
-chmod 644 daten/.first
 chmod 644 daten/current.php
 chmod 600 daten/c
 chmod 600 daten/1current.php
@@ -43,8 +43,8 @@ chmod 644 daten/c2.php
 chmod 644 daten/1roof.php
 chmod 644 daten/gray.png
 chmod 644 daten/last_production
+chmod 644 daten/bla
 chmod 700 daten/deploy.sh
-chmod 644 daten/.last
 chmod 644 daten/c.php
 chmod 644 daten/lens.php
 chmod 777 daten/yellow.png

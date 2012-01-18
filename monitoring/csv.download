@@ -29,13 +29,14 @@ touch csv.out
 chmod 644 csv.out
 
 echo "`utc`: begin wget" | tee -a exp
-# cp ../daten/2011/11/raw.20111108.csv csv.tmp
+####### # cp ../daten/2011/11/raw.20111108.csv csv.tmp
 if ! wget --ftp-user=user --ftp-password=`cat passwd` -O csv.tmp "ftp://h6pv.qipc.org/CSV/$Y/$m/$Y-$m-$d.csv" ; then
   echo "`utc`: FAILED 1" | tee -a exp
   exit 1
 fi
 echo "`utc`: wget finished" | tee -a exp
 
+snline=false
 headerline=false
 while IFS=';' read \
   c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
@@ -47,14 +48,26 @@ while IFS=';' read \
   c60 c61 c62 c63 c64 c65 c66 c67 \
 ; do
 
+  if ! $snline ; then
+    if [ "$c01" == '155001233' ] ; then
+      snline=true
+      for (( i=0 ; i <= 67 ; i++ )) ; do
+        n=`printf '%02u' $i`
+        eval "sn$n="'$'"c$n"
+      done
+    fi
+    continue
+  fi
   if ! $headerline ; then
 
     if [ "$c01" = "Metering.TotWhOut" ] ; then
       echo "`utc`: headerline detected:" | tee -a exp
 
       for (( i=0 ; i <= 67 ; i++ )) ; do
-        n=`printf 'c%02u' $i`
-        tag=`eval echo '$'$n`
+        n=`printf '%02u' $i`
+        tag=`eval echo '$'c$n`
+        sn=`eval echo '$'sn$n`
+        # echo $i:$sn:$tag
         case "$tag" in
           'Metering.TotWhOut' )
             if [ ! "$i_total_work" ] ; then
@@ -67,27 +80,35 @@ while IFS=';' read \
             fi
           ;;
           'DcMs.Watt[001]' )
-            if [ "$i_1_1" ] ; then
-              i_2_1=$i
-            elif [ "$i_0_1" ] ; then
-              i_1_1=$i
-            else
-              i_0_1=$i
-            fi
+            case "$sn" in
+              '155001233' )
+                i_0_1=$i
+              ;;
+              '2110014178' )
+                i_1_1=$i
+              ;;
+              '2110014868' )
+                i_2_1=$i
+              ;;
+            esac
           ;;
           'DcMs.Watt[002]' )
-            if [ "$i_1_2" ] ; then
-              i_2_2=$i
-            elif [ "$i_0_2" ] ; then
-              i_1_2=$i
-            else
-              i_0_2=$i
-            fi
+            case "$sn" in
+              '155001233' )
+                i_0_2=$i
+              ;;
+              '2110014178' )
+                i_1_2=$i
+              ;;
+              '2110014868' )
+                i_2_2=$i
+              ;;
+            esac
           ;;
         esac
       done
 
-      echo "`utc`: fields detected: [$i_total_power,$i_total_work,$i_1_1,$i_1_2,$i_2_1,$i_2_2]"  | tee -a exp
+      echo "`utc`: fields detected: [$i_total_power,$i_total_work,$i_0_1,$i_0_2,$i_1_1,$i_1_2,$i_2_1,$i_2_2]"  | tee -a exp
       if echo ",$i_total_power,$i_total_work,$i_1_1,$i_1_2,$i_2_1,$i_2_2," | grep -q ',,' ; then
         echo "`utc`: FAILED: malformed headerline" | tee -a exp
         exit 2
