@@ -38,7 +38,10 @@ echo "`utc`: wget finished" | tee -a exp
 
 snline=false
 headerline=false
-while IFS=';' read \
+
+# replace trailing CR by semicolon (otherwise, last field in line will not trigger):
+sed -s 's/.$/;/' < csv.tmp \
+| while IFS=';' read \
   c00 c01 c02 c03 c04 c05 c06 c07 c08 c09  \
   c10 c11 c12 c13 c14 c15 c16 c17 c18 c19 \
   c20 c21 c22 c23 c24 c25 c26 c27 c28 c29 \
@@ -67,6 +70,10 @@ while IFS=';' read \
         n=`printf '%02u' $i`
         tag=`eval echo '$'c$n`
         sn=`eval echo '$'sn$n`
+        # echo "[$n]"
+        # echo "[$tag]"
+        # echo "[$sn]"
+        # echo
         # echo $i:$sn:$tag
         case "$tag" in
           'Metering.TotWhOut' )
@@ -80,6 +87,7 @@ while IFS=';' read \
             fi
           ;;
           'DcMs.Watt[001]' )
+            # echo "1:$sn"
             case "$sn" in
               '155001233' )
                 i_0_1=$i
@@ -93,6 +101,7 @@ while IFS=';' read \
             esac
           ;;
           'DcMs.Watt[002]' )
+            # echo "2:$sn"
             case "$sn" in
               '155001233' )
                 i_0_2=$i
@@ -182,7 +191,7 @@ while IFS=';' read \
   # echo "`utc`: canonical units: $hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
   echo "$hi$mi $work_total_MWh $power_total $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> csv.out
 
-done < csv.tmp
+done
 
 mv csv.out $datadir/$Y/$m/$d.txt
 
