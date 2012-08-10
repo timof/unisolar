@@ -185,7 +185,7 @@ sed -s 's/.$/;/' < csv.tmp \
   # fix time zone insanities (should work east of greenwhich)
   #
   while [ \( "$hi" -ge 1 \) -a \( "$hi$mi" -ge "$H$M" \) ] ; do
-    $hi=$((hi-1))
+    hi=$((hi-1))
   done
 
   # echo "`utc`: canonical units: $hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
