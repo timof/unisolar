@@ -1,0 +1,18 @@
+#!/bin/sh
+
+cd /t/unisolar/kongress.edemokratie
+
+# reblock, then linit to 10k:
+#
+msg=`dd obs=512 | dd bs=512 count=20 2>/dev/null`
+
+echo "$msg" > chunk.`utc`
+
+echo "$msg" | grep -q "^From: Koordination Kongress Energiedemokratie <" || exit 0
+echo "$msg" | grep -q "^Subject: Anmeldung Kongress Energiedemokratie" || exit 0
+echo "$msg" | grep -q "^Form Displayed on Page: www.energiedemokratie.net/" || exit 0
+
+echo "$msg" > anmeldung.`utc`
+
+./mail2wiki.sh
+
