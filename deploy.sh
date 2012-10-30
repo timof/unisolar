@@ -22,6 +22,7 @@ chmod 600 monitoring/channels
 chmod 600 monitoring/t
 chmod 600 monitoring/out
 chmod 700 monitoring/c2
+chmod 644 monitoring/csv.out
 chmod 600 monitoring/1csv.download
 chmod 700 monitoring/j
 chmod 600 monitoring/passwd
@@ -32,6 +33,7 @@ chmod 600 monitoring/zip/2011-06-20_131000.xml
 chmod 600 monitoring/zip/2011-06-20_130000.xml
 chmod 600 monitoring/zip/2011-06-20_130500.xml
 chmod 600 monitoring/zip/2011-06-20_130000.zip
+chmod 600 monitoring/csv.tmp
 chmod 755 daten
 chmod 644 daten/roof.php
 chmod 644 daten/d2.php
