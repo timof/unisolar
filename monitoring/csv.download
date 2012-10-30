@@ -131,7 +131,6 @@ sed -s 's/.$/;/' < csv.tmp \
 
   timestamp="$c00"
 
-  
   if [[ "$timestamp" =~ '20'..-..-..' '.. ]] ; then
     # echo "`utc`: looks like valid timestamp: [$timestamp]" | tee -a exp
     : nop
@@ -178,17 +177,60 @@ sed -s 's/.$/;/' < csv.tmp \
   
   work_total_kWh=`printf %.0f "$work_total_kWh"`
   work_total_MWh=`printf %.3f "$work_total_MWh"`
-    
+
+  Yi=`echo "$timestamp" | sed 's/^\(....\).*/\1/'`
+  Mi=`echo "$timestamp" | sed 's/^.....\(..\).*/\1/'`
+  Di=`echo "$timestamp" | sed 's/^........\(..\).*/\1/'`
   hi=`echo "$timestamp" | sed 's/^...........\(..\).*/\1/'`
   mi=`echo "$timestamp" | sed 's/^..............\(..\).*/\1/'`
-  
-  # fix time zone insanities (should work east of greenwhich)
-  #
-  while [ \( "$hi" -ge 1 \) -a \( "$hi$mi" -ge "$H$M" \) ] ; do
-    hi=$((hi-1))
-  done
 
-  # echo "`utc`: canonical units: $hi$mi: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
+  wi=`date -d "$Yi-$Mi-$Di" +%w`
+
+  # webbox is broken and doesn't support utc (even though it claims to), so we kludge around
+  # daylight saving insanities:
+  #
+  case "$Mi" in
+    11 | 12 | 01 | 02 )
+      dst=false
+    ;;
+    04 | 05 | 06 | 07 | 08 | 09 )
+      dst=true
+    ;;
+    03 )
+      # Di - wi is day-of-month of most recent sunday;
+      # if > 24, this was the last sunday of march and we are in dst mode now:
+      #
+      if [ $((Di-wi)) -gt 24  ] ; then
+        dst=true
+      else
+        dst=false
+      fi
+    ;;
+    10 )
+      if [ $((Di-wi)) -gt 24  ] ; then
+        dst=false
+      else
+        dst=true
+      fi
+    ;;
+  esac
+
+  if $dst; then
+    : fine: plain utc
+    : nop
+  else
+    : broken: utc _minus_ dst hour - fix it:
+    hi=`printf '%02u' $((hi+1))`
+  fi
+  
+### old kludge - wasn't sufficient :-(
+#   # fix time zone insanities (should work east of greenwhich)
+#   #
+#   while [ \( "$hi" -ge 1 \) -a \( "$hi$mi" -ge "$H$M" \) ] ; do
+#     hi=$((hi-1))
+#   done
+
+  # echo "`utc`: canonical units: $hi$mi[$dst]: $work_total_MWh, $power_total [$power_1_1 $power_1_2] [$power_2_1 $power_2_2]" | tee -a exp
   echo "$hi$mi $work_total_MWh $power_total $power_1_1 $power_1_2 $power_2_1 $power_2_2" >> csv.out
 
 done
