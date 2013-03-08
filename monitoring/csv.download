@@ -186,6 +186,10 @@ sed -s 's/.$/;/' < csv.tmp \
 
   wi=`date -d "$Yi-$Mi-$Di" +%w`
 
+  # avoid octal interpretation in arithmetics below:
+  #
+  Di=`echo "$Di" | sed 's/^0//'`
+
   # webbox is broken and doesn't support utc (even though it claims to), so we kludge around
   # daylight saving insanities:
   #
