@@ -5,6 +5,12 @@
 # - disadvantage: many details not available
 # thus, we use this script to get real-time values, and csv.download for the details
 
+H=`date -u +%H`
+if [[ ( $H -lt 3 ) || ( $H -gt 21 ) ]] ; then
+  # readings around day switchover are unreliable, and won't add new data anyway:
+  exit 0;
+fi
+
 datadir=/Users/unisolar/daten
 
 touch $datadir/last.tmp $datadir/last_production
@@ -24,10 +30,6 @@ $d = date( 'd', $timestamp );
 $H = date( 'H', $timestamp );
 $M = date( 'i', $timestamp );
 
-if( ( $H < 3 ) || ( $H > 21 ) {
-  // readings around day switchover are unreliable, and won't add new data anyway:
-  return;
-}
 
 // echo "$timestamp, $Y, $m, $d, $H, $M";
 
