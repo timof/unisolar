@@ -24,6 +24,11 @@ $d = date( 'd', $timestamp );
 $H = date( 'H', $timestamp );
 $M = date( 'i', $timestamp );
 
+if( ( $H < 3 ) || ( $H > 21 ) {
+  // readings around day switchover are unreliable, and won't add new data anyway:
+  return;
+}
+
 // echo "$timestamp, $Y, $m, $d, $H, $M";
 
 $devices = array( "0080:7dc442e2", "0080:7dc44594" );
@@ -62,6 +67,9 @@ foreach( $r as $i ) {
       $leistung = sprintf( '%u %s', $i['value'], $i['unit'] );
       break;
     case 'Gesamtertrag':
+      // kludge will inverter 2 is out of service:
+      // $i['value'] += 40810;
+      //
       $arbeit_total = sprintf( '%.2f %s', $i['value'], $i['unit'] );
       break;
     case 'Tagesertrag':

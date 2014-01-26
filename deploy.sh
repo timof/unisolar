@@ -44,6 +44,10 @@ chmod 644 daten/1roof.php
 chmod 644 daten/gray.png
 chmod 644 daten/last_production
 chmod 644 daten/bla
+chmod 755 daten/4135
+chmod 755 daten/4135/2.
+chmod 644 daten/4135/2./99.first
+chmod 644 daten/4135/2./99.last
 chmod 700 daten/deploy.sh
 chmod 644 daten/.last
 chmod 644 daten/c.php

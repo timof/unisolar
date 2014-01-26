@@ -224,8 +224,8 @@ sed -s 's/.$/;/' < csv.tmp \
     : nop
   else
     : broken: utc _minus_ dst hour - fix it:
-    hi=`echo "$hi" | sed 's/^0//'`
-    hi=`printf '%02u' $((hi+1))`
+#    hi=`echo "$hi" | sed 's/^0//'`
+#    hi=`printf '%02u' $((hi+1))`
   fi
   
 ### old kludge - wasn't sufficient :-(
