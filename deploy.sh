@@ -22,6 +22,7 @@ chmod 600 monitoring/channels
 chmod 600 monitoring/t
 chmod 600 monitoring/out
 chmod 700 monitoring/c2
+chmod 700 monitoring/deploy.sh
 chmod 600 monitoring/1csv.download
 chmod 700 monitoring/j
 chmod 600 monitoring/passwd

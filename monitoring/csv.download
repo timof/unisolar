@@ -219,11 +219,16 @@ sed -s 's/.$/;/' < csv.tmp \
     ;;
   esac
 
+  if [ "$hi" -lt 1 ] ; then
+    continue
+  fi
   if $dst; then
+    : broken: utc _plus_ dst hour - fix it:
+    hi=`echo "$hi" | sed 's/^0//'`
+    hi=`printf '%02u' $((hi-1))`
+  else
     : fine: plain utc
     : nop
-  else
-    : broken: utc _minus_ dst hour - fix it:
 #    hi=`echo "$hi" | sed 's/^0//'`
 #    hi=`printf '%02u' $((hi+1))`
   fi
