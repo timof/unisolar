@@ -25,6 +25,14 @@ if( isset( $_GET['nonce'] ) ) {
   }
 }
 
+$j = '';
+if( isset( $_GET['j'] ) ) {
+  sscanf( $_GET['j'], '%u', & $j );
+}
+
+$production_goal_total = 540.0;
+$production_goal_year = 28.600;
+
 function maxday( $Y, $m ) {
   foreach( array( 31, 30, 29, 28 ) as $d )
     if( checkdate( $m, $d, $Y ) )
@@ -33,10 +41,15 @@ function maxday( $Y, $m ) {
 }
 
 function inlink( $change = array() ) {
+  global $j;
   $nonce = random_hex_string( 8 );
   $reself = "roof.php?";
-  if( ! getenv('robot') )
+  if( ! getenv('robot') ) {
     $reself .= "&amp;nonce=$nonce";
+  }
+  if( $j ) {
+    $reself .= "&amp;j=$j";
+  }
   if( $change === 'current' ) {
     return $reself;
   } else {
@@ -741,7 +754,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         case 'kWh':
           $gt /= 1000;
         case 'MWh':
-          $gt = sprintf( "%.2f", $gt );
+          $gt = sprintf( "%.3f", $gt );
           break;
         default:
           break;
@@ -770,7 +783,11 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       echo "<table class='data'>";
       printf( "<tr><th>Leistung:</th><td class='number'>%s</td><td class='unit'>kW</tr>", $cp );
       printf( "<tr><th>Arbeit heute:</th><td class='number'>%s</td><td class='unit'>kWh</td></tr>", $dt );
-      printf( "<tr><th>Arbeit gesamt:</th><td class='number'>%s</td><td class='unit'>MWh</td></tr>", $gt );
+      $extra = '';
+      if( $j & 1 ) {
+        $extra = sprintf( ' (%8.3f%%)', 100 * $gt / $production_goal_total );
+      }
+      printf( "<tr><th>Arbeit gesamt:</th><td class='number'>%s</td><td class='unit'>MWh%s</td></tr>", $gt, $extra );
       if( is_readable( "$Ys/$ms/raw.$Ys$ms$ds.csv" ) )
         printf( "<tr><th style='padding-top:2px;'>Rohdaten:</th><td  style='padding-top:2px;' colspan='2'><a href='$Ys/$ms/raw.$Ys$ms$ds.csv'>$Ys/$ms/raw.$Ys$ms$ds.csv</a></td></tr>" );
       echo "</table>";
