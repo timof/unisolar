@@ -746,7 +746,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         </h4>
     <div id='yeargraph'>" . year_graph( $Y1, $m1, $Y2, $m2, $Yi, $mi, false ) . "</div>
   ";
-  echo "</td><td style='vertical-align:top;padding:1ex 1em 1ex 1em;font-size:10pt;'>";
+  echo "</td><td style='vertical-align:top;padding:1ex 1em 0ex 1em;font-size:10pt;'>";
 
   echo "<div class='title'><a href='http://www.unisolar-potsdam.de'>UniSolar Potsdam e.V.</a> - <a href='//www.unisolar-potsdam.de/?page_id=716'>Photovoltaik-Anlage Haus 6, Campus Golm</a></div>";
 
@@ -789,7 +789,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
           break;
       }
       // if( 0 ) {
-      echo "<table class='data'>";
+      echo "<table class='data' style='margin-bottom:-1ex;'>";
       printf( "<tr><th>Leistung:</th><td class='number'>%s</td><td class='unit'>kW</tr>", $cp );
       printf( "<tr><th>Arbeit heute:</th><td class='number'>%s</td><td class='unit'>kWh</td></tr>", $dt );
       $days_year = ( $is_leap_year ? 366 : 365 );
