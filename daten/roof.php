@@ -32,6 +32,7 @@ if( isset( $_GET['j'] ) ) {
 
 $production_goal_total = 540.0;
 $production_goal_year = 28.600;
+$production_start_year = 156.660;
 
 function maxday( $Y, $m ) {
   foreach( array( 31, 30, 29, 28 ) as $d )
@@ -490,12 +491,16 @@ function year_graph( $Y, $m, $Yf, $mf, $Ymark, $mmark, $caption = '' ) {
 
 
 
-$now = explode( ',' , date( 'Y,m,d,H,i,s' ) );
+$the_date = date( 'Y,m,d,H,i,s,z,L' );
+$now = explode( ',' , $the_date );
 $Yn = $now[0];
 $mn = $now[1];
 $dn = $now[2];
 $Hn = $now[3];
 $Mn = $now[4];
+// $now[5]: seconds
+$julian_date = $now[6] + 1; // counts from 0!
+$is_leap_year = $now[7];
 
 $lines = file( 'last' );
 $last = $lines[ 0 ];
@@ -746,7 +751,11 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   echo "<div class='title'><a href='http://www.unisolar-potsdam.de'>UniSolar Potsdam e.V.</a> - <a href='//www.unisolar-potsdam.de/?page_id=716'>Photovoltaik-Anlage Haus 6, Campus Golm</a></div>";
 
   if( $current ) {
-    echo "<div id='timer' style='padding:0px;margin:0pt;'>aktuelle Ablesung: $Ys$ms$ds.$Hs$Ms ".A_UTC."</div>";
+    $t = 'aktuelle Ablesung';
+    if( $j & 4 ) {
+      $t = "<a href=".inlink('current').">$t</a>";
+    }
+    echo "<div id='timer' style='padding:0px;margin:0pt;'>$t: $Ys$ms$ds.$Hs$Ms ".A_UTC."</div>";
 
     if( count( $lines ) == 4 ) {
       sscanf( $lines[ 3 ], '%f %s', & $gt, & $gt_unit );
@@ -783,6 +792,16 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       echo "<table class='data'>";
       printf( "<tr><th>Leistung:</th><td class='number'>%s</td><td class='unit'>kW</tr>", $cp );
       printf( "<tr><th>Arbeit heute:</th><td class='number'>%s</td><td class='unit'>kWh</td></tr>", $dt );
+      $days_year = ( $is_leap_year ? 366 : 365 );
+      $days_left = $days_year - $julian_date - 1;
+      if( $j & 2 ) {
+        printf(
+          "<tr><th>Arbeit heuer:</th><td class='number'>%8.3f</td><td class='unit'>MWh (%8.3f%% - %4.2f/d)</td></tr>"
+        , $gt - $production_start_year
+        , 100 * ( $gt - $production_start_year ) / $production_goal_year
+        , ( $days_left > 0 ) ? 1000 * ( $production_start_year + $production_goal_year - $gt ) / $days_left : 0.0
+        );
+      }
       $extra = '';
       if( $j & 1 ) {
         $extra = sprintf( ' (%8.3f%%)', 100 * $gt / $production_goal_total );
