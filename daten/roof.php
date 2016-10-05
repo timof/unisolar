@@ -1,6 +1,6 @@
 <?
 
-define( 'A_UTC', "<a title='UTC: koordinierte Weltzeit' href='http://de.wikipedia.org/wiki/UTC' target='_new'>UTC</a>" );
+define( 'A_UTC', "<a title='UTC: koordinierte Weltzeit' href='http://de.wikipedia.org/wiki/UTC' onmouseover='start_rl();' target='_new'>UTC</a>" );
 
 global $jlf_urandom_handle;
 $jlf_urandom_handle = false;
@@ -33,6 +33,7 @@ if( isset( $_GET['j'] ) ) {
 $production_goal_total = 540.0;
 $production_goal_year = 28.600;
 $production_start_year = 156.660;
+$year_last = 2030;
 
 function maxday( $Y, $m ) {
   foreach( array( 31, 30, 29, 28 ) as $d )
@@ -753,7 +754,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
   if( $current ) {
     $t = 'aktuelle Ablesung';
     if( $j & 4 ) {
-      $t = "<a href=".inlink('current').">$t</a>";
+      $t = "<a href=".inlink('current')." onmouseover='stop_rl();'>$t</a>";
     }
     echo "<div id='timer' style='padding:0px;margin:0pt;'>$t: $Ys$ms$ds.$Hs$Ms ".A_UTC."</div>";
 
@@ -804,7 +805,9 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       }
       $extra = '';
       if( $j & 1 ) {
-        $extra = sprintf( ' (%8.3f%%)', 100 * $gt / $production_goal_total );
+        $years_left = $year_last - $Yn;
+        $days_left += $years_left * 365.25;
+        $extra = sprintf( ' (%8.3f%% - %4.2f/d)', 100 * $gt / $production_goal_total, 1000 * ( $production_goal_total - $gt ) / $days_left );
       }
       printf( "<tr><th>Arbeit gesamt:</th><td class='number'>%s</td><td class='unit'>MWh%s</td></tr>", $gt, $extra );
       if( is_readable( "$Ys/$ms/raw.$Ys$ms$ds.csv" ) )
@@ -891,15 +894,27 @@ if( $current ) {
     var d = new Date();
     var n = d.getTime();
     var ticks = 1200;
+    var run = 0;
+    function start_rl() {
+      run = 1;
+    }
+    function stop_rl() {
+      run = 0;
+    }
     function rl() {
-      if( ticks-- > 0 ) {
-        document.getElementById('timer').style.backgroundPosition = ( 0.833 * ticks ) / 10 + '% 0px';
-        setTimeout( 'rl()', 50 );
+      if( run ) {
+        if( ticks-- > 0 ) {
+          document.getElementById('timer').style.backgroundPosition = ( 0.833 * ticks ) / 10 + '% 0px';
+          setTimeout( 'rl()', 50 );
+       } else {
+          self.location.href = '". preg_replace( '/&amp;/', '&', inlink( 'current' ) ) ."';
+        }
       } else {
-        self.location.href = '". preg_replace( '/&amp;/', '&', inlink( 'current' ) ) ."';
+        setTimeout( 'rl()', 50 );
       }
     }
-    setTimeout( 'rl()', 50 );
+    start_rl();
+    rl();
   </script>
   ";
 }
