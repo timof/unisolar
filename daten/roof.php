@@ -32,7 +32,8 @@ if( isset( $_GET['j'] ) ) {
 
 $production_goal_total = 540.0;
 $production_goal_year = 28.600;
-$production_start_year = 156.660;
+$production_start_year = 187.750;  // relative to beginning of...
+$production_ref_year = 2017;
 $year_last = 2030;
 
 function maxday( $Y, $m ) {
@@ -794,8 +795,11 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       printf( "<tr><th>Leistung:</th><td class='number'>%s</td><td class='unit'>kW</tr>", $cp );
       printf( "<tr><th>Arbeit heute:</th><td class='number'>%s</td><td class='unit'>kWh</td></tr>", $dt );
       $days_year = ( $is_leap_year ? 366 : 365 );
-      $days_left = $days_year - $julian_date - 1;
       if( $j & 2 ) {
+        $days_left = $days_year - $julian_date - 1;
+        if( $Yn < $production_ref_year ) { // allow smooth switchover to next year around christmas
+          $days_left += 365;
+        }
         printf(
           "<tr><th>Arbeit heuer:</th><td class='number'>%8.3f</td><td class='unit'>MWh (%8.3f%% - %4.2f/d)</td></tr>"
         , $gt - $production_start_year
@@ -805,6 +809,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       }
       $extra = '';
       if( $j & 1 ) {
+        $days_left = $days_year - $julian_date - 1;
         $years_left = $year_last - $Yn;
         $days_left += $years_left * 365.25;
         $extra = sprintf( ' (%8.3f%% - %4.2f/d)', 100 * $gt / $production_goal_total, 1000 * ( $production_goal_total - $gt ) / $days_left );
