@@ -41,7 +41,9 @@ chmod 644 daten/current.php
 chmod 644 daten/grandtotal
 chmod 777 daten/y.png
 chmod 644 daten/lens.php
+chmod 644 daten/.first
 chmod 644 daten/1roof.php
+chmod 644 daten/.last
 chmod 777 daten/last
 chmod 644 daten/c2.php
 chmod 644 daten/d.php

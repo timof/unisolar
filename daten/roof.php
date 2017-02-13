@@ -32,7 +32,7 @@ if( isset( $_GET['j'] ) ) {
 
 $production_goal_total = 540.0;
 $production_goal_year = 28.600;
-$production_start_year = 187.750;  // relative to beginning of...
+$production_start_year = 187.842;  // relative to beginning of...
 $production_ref_year = 2017;
 $year_last = 2030;
 
@@ -493,7 +493,7 @@ function year_graph( $Y, $m, $Yf, $mf, $Ymark, $mmark, $caption = '' ) {
 
 
 
-$the_date = date( 'Y,m,d,H,i,s,z,L' );
+$the_date = date( 'Y,m,d,H,i,s,z,L,n,j' );
 $now = explode( ',' , $the_date );
 $Yn = $now[0];
 $mn = $now[1];
@@ -503,6 +503,8 @@ $Mn = $now[4];
 // $now[5]: seconds
 $julian_date = $now[6] + 1; // counts from 0!
 $is_leap_year = $now[7];
+$mnn = $now[8]; // month-of-year numerically (no leading zeroes)
+$dnn = $now[9]; // day-of-month numerically (no leading zeroes)
 
 $lines = file( 'last' );
 $last = $lines[ 0 ];
@@ -550,6 +552,15 @@ if( ( ! checkdate( $mi, $di, $Yi ) )
   return;
 }
 
+
+$msoll_array = array( 1 =>  800, 2 => 1200, 3 => 2200, 4 => 3200, 5 => 3900, 6 => 3600
+                    , 7 => 4000, 8 => 3600, 9 => 2700, 10 => 1900, 11 => 1000, 12 => 600
+                    );
+$days_month_array = array( 1 =>  31, 2 => ( $is_leap_year ? 29 : 28 ), 3 => 31, 4 => 30, 5 => 31, 6 => 30
+                    , 7 => 31, 8 => 31, 9 => 30, 10 => 31, 11 => 30, 12 => 31
+                    );
+$msoll = $msoll_array[ $mnn ];
+$days_month = $days_month_array[ $mnn ];
 
 
 
@@ -754,7 +765,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
 
   if( $current ) {
     $t = 'aktuelle Ablesung';
-    if( $j & 4 ) {
+    if( $j & 8 ) {
       $t = "<a href=".inlink('current')." onmouseover='stop_rl();'>$t</a>";
     }
     echo "<div id='timer' style='padding:0px;margin:0pt;'>$t: $Ys$ms$ds.$Hs$Ms ".A_UTC."</div>";
@@ -794,6 +805,18 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
       echo "<table class='data' style='margin-bottom:-1ex;'>";
       printf( "<tr><th>Leistung:</th><td class='number'>%s</td><td class='unit'>kW</tr>", $cp );
       printf( "<tr><th>Arbeit heute:</th><td class='number'>%s</td><td class='unit'>kWh</td></tr>", $dt );
+
+      if( $j & 4 ) {
+        $days_left = $days_month - $dnn;
+        $mprod = monthly_production_kWh( $Yn, $mnn );
+        printf(
+          "<tr><th>Arbeit heum:</th><td class='number'>%8.0f</td><td class='unit'>kWh (%8.2f%% - %4.2f/d)</td></tr>"
+        , $mprod
+        , 100 * $mprod / $msoll
+        , ( $days_left > 0 ) ? ( $msoll - $mprod ) / $days_left : 0.0
+        );
+      }
+
       $days_year = ( $is_leap_year ? 366 : 365 );
       if( $j & 2 ) {
         $days_left = $days_year - $julian_date - 1;
@@ -807,6 +830,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         , ( $days_left > 0 ) ? 1000 * ( $production_start_year + $production_goal_year - $gt ) / $days_left : 0.0
         );
       }
+
       $extra = '';
       if( $j & 1 ) {
         $days_left = $days_year - $julian_date - 1;
