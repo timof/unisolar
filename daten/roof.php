@@ -810,10 +810,11 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         $days_left = $days_month - $dnn;
         $mprod = monthly_production_kWh( $Yn, $mnn );
         printf(
-          "<tr><th>Arbeit heum:</th><td class='number'>%8.0f</td><td class='unit'>kWh (%8.2f%% - %4.2f/d)</td></tr>"
+          "<tr><th>Arbeit heum:</th><td class='number'>%8.0f</td><td class='unit'>kWh (%8.2f%% - %4.2f * %d)</td></tr>"
         , $mprod
         , 100 * $mprod / $msoll
         , ( $days_left > 0 ) ? ( $msoll - $mprod ) / $days_left : 0.0
+        , $days_left
         );
       }
 
@@ -824,10 +825,11 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
           $days_left += 365;
         }
         printf(
-          "<tr><th>Arbeit heuer:</th><td class='number'>%8.3f</td><td class='unit'>MWh (%8.3f%% - %4.2f/d)</td></tr>"
+          "<tr><th>Arbeit heuer:</th><td class='number'>%8.3f</td><td class='unit'>MWh (%8.3f%% - %4.2f * %d)</td></tr>"
         , $gt - $production_start_year
         , 100 * ( $gt - $production_start_year ) / $production_goal_year
         , ( $days_left > 0 ) ? 1000 * ( $production_start_year + $production_goal_year - $gt ) / $days_left : 0.0
+        , $days_left
         );
       }
 
@@ -836,7 +838,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         $days_left = $days_year - $julian_date - 1;
         $years_left = $year_last - $Yn;
         $days_left += $years_left * 365.25;
-        $extra = sprintf( ' (%8.3f%% - %4.2f/d)', 100 * $gt / $production_goal_total, 1000 * ( $production_goal_total - $gt ) / $days_left );
+        $extra = sprintf( ' (%8.3f%% - %4.2f * %d)', 100 * $gt / $production_goal_total, 1000 * ( $production_goal_total - $gt ) / $days_left, $days_left );
       }
       printf( "<tr><th>Arbeit gesamt:</th><td class='number'>%s</td><td class='unit'>MWh%s</td></tr>", $gt, $extra );
       if( is_readable( "$Ys/$ms/raw.$Ys$ms$ds.csv" ) )
