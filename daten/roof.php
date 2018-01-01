@@ -32,8 +32,8 @@ if( isset( $_GET['j'] ) ) {
 
 $production_goal_total = 540.0;
 $production_goal_year = 28.600;
-$production_start_year = 187.842;  // relative to beginning of...
-$production_ref_year = 2017;
+$production_start_year = 217.605;  // relative to beginning of...
+$production_ref_year = 2018;
 $year_last = 2030;
 
 function maxday( $Y, $m ) {
@@ -820,7 +820,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
 
       $days_year = ( $is_leap_year ? 366 : 365 );
       if( $j & 2 ) {
-        $days_left = $days_year - $julian_date - 1;
+        $days_left = $days_year - $julian_date;
         if( $Yn < $production_ref_year ) { // allow smooth switchover to next year around christmas
           $days_left += 365;
         }
@@ -835,7 +835,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
 
       $extra = '';
       if( $j & 1 ) {
-        $days_left = $days_year - $julian_date - 1;
+        $days_left = $days_year - $julian_date;
         $years_left = $year_last - $Yn;
         $days_left += $years_left * 365.25;
         $extra = sprintf( ' (%8.3f%% - %4.2f * %d)', 100 * $gt / $production_goal_total, 1000 * ( $production_goal_total - $gt ) / $days_left, $days_left );
