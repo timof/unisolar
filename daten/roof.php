@@ -486,7 +486,7 @@ function year_graph( $Y, $m, $Yf, $mf, $Ymark, $mmark, $caption = '' ) {
       $Y++;
     }
   }
-  return vbar_graph( $data, 100, 24, $caption );
+  return vbar_graph( $data, 110, 24, $caption );
 }
 
 
@@ -838,7 +838,9 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         $days_left = $days_year - $julian_date;
         $years_left = $year_last - $Yn;
         $days_left += $years_left * 365.25;
-        $extra = sprintf( ' (%8.3f%% - %4.2f * %d)', 100 * $gt / $production_goal_total, 1000 * ( $production_goal_total - $gt ) / $days_left, $days_left );
+        $daily_goal = 1000 * ( $production_goal_total - $gt ) / $days_left;
+        $incr = $daily_goal / $days_left;
+        $extra = sprintf( ' (%8.3f%% - %4.2f * %d , %5.4f)', 100 * $gt / $production_goal_total, $daily_goal, $days_left, $incr );
       }
       printf( "<tr><th>Arbeit gesamt:</th><td class='number'>%s</td><td class='unit'>MWh%s</td></tr>", $gt, $extra );
       if( is_readable( "$Ys/$ms/raw.$Ys$ms$ds.csv" ) )
