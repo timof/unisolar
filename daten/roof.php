@@ -32,8 +32,9 @@ if( isset( $_GET['j'] ) ) {
 
 $production_goal_total = 540.0;
 $production_goal_year = 28.600;
-$production_start_year = 217.605;  // relative to beginning of...
-$production_ref_year = 2018;
+// $production_goal_year2 = 34.0;
+$production_start_year = 252.033;  // relative to beginning of...
+$production_ref_year = 2019;
 $year_last = 2030;
 
 function maxday( $Y, $m ) {
@@ -118,6 +119,9 @@ function monthly_production_kWh( $Y, $m ) {
       default:
         return false;
     }
+//     if( $Y == 2018 && $m == 6 ) {
+//       echo "[$path1] [$path2] [$work1] [$work2]";
+//     }
     return $work2 - $work1;
   }
   return false;
@@ -825,7 +829,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
           $days_left += 365;
         }
         printf(
-          "<tr><th>Arbeit heuer:</th><td class='number'>%8.3f</td><td class='unit'>MWh (%8.3f%% - %4.2f * %d)</td></tr>"
+          "<tr><th>Arbeit heuer:</th><td class='number'>%8.3f</td><td class='unit'>MWh (%8.3f%% - %4.2f* %d)</td></tr>"
         , $gt - $production_start_year
         , 100 * ( $gt - $production_start_year ) / $production_goal_year
         , ( $days_left > 0 ) ? 1000 * ( $production_start_year + $production_goal_year - $gt ) / $days_left : 0.0
@@ -840,7 +844,7 @@ echo               "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//
         $days_left += $years_left * 365.25;
         $daily_goal = 1000 * ( $production_goal_total - $gt ) / $days_left;
         $incr = $daily_goal / $days_left;
-        $extra = sprintf( ' (%8.3f%% - %4.2f * %d , %5.4f)', 100 * $gt / $production_goal_total, $daily_goal, $days_left, $incr );
+        $extra = sprintf( ' (%8.3f%% - %5.3f * %d )', 100 * $gt / $production_goal_total, $daily_goal, $days_left );
       }
       printf( "<tr><th>Arbeit gesamt:</th><td class='number'>%s</td><td class='unit'>MWh%s</td></tr>", $gt, $extra );
       if( is_readable( "$Ys/$ms/raw.$Ys$ms$ds.csv" ) )
